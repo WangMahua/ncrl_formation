@@ -7,11 +7,11 @@
 #include <tf/tf.h>
 #include <math.h>
 
-#define LEADER_INIT_X -1.0f
-#define LEADER_INIT_Y 0.0f
+#define LEADER_INIT_X 0.0f
+#define LEADER_INIT_Y 0.55f
 #define TAKEOFF_SPEED 0.5f
 #define TAKEOFF_HEIGHT 1.2f
-#define LAND_SPEED 0.8f
+#define LAND_SPEED 0.5f
 #define CONTROL_HZ 100.0f
 
 float trajectory_t; 
