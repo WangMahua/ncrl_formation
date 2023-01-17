@@ -1,4 +1,4 @@
-#include <ros/ros.h>
+ #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <mavros_msgs/CommandBool.h>
@@ -299,7 +299,7 @@ int main(int argc, char **argv)
     }   
     std::cout<< use_input_s << "\n";
     string MAV_self_topic;
-    ros::param::get("sub_topic", MAV_self_topic);
+    ros::param::get("pose_topic", MAV_self_topic);
     //    subscriber    //
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 100, state_cb);
     ros::Subscriber host_sub = nh.subscribe<geometry_msgs::PoseStamped>(MAV_self_topic, 10, host_pose_cb);
@@ -400,7 +400,7 @@ int main(int argc, char **argv)
         //keyboard control
         if(kill_all_drone == 1){
             ROS_WARN("velocity_cbf_kill!");
-            offb_set_mode.request.custom_mode = "STABILIZED";
+            offb_set_mode.request.custom_mode = "POSITION";
             set_mode_client.call(offb_set_mode);
             arm_cmd.request.value = false;
             arming_client.call(arm_cmd);

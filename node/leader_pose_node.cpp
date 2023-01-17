@@ -224,7 +224,7 @@ int main(int argc, char **argv)
   leader_pose.pose.orientation.z = 0.0;
   leader_pose.pose.orientation.w = 1.0;
 
-	ROS_INFO("(t):takeoff\n (l):land\n (e):start_trajectory\n (w):waypoint_mode\n (r):track_red_point\n (p):stop MAV\n (k):kill_all_drone\n (s):start_all_drone \n");
+	ROS_INFO("(t):takeoff\n(l):land\n(e):start_trajectory\n(w):waypoint_mode\n(r):track_red_point\n(p):stop MAV\n(k):kill_all_drone\n(s):start_all_drone \n");
   while (ros::ok())
   {
         //keyboard control
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
                 case 115:    // (s) uav_start
 					start_all_drone = 1;
 					ROS_INFO("start all drone");
-                    break;
+                    break;             	
 			}
         }
     /**

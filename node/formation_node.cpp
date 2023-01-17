@@ -97,10 +97,10 @@ int main(int argc, char **argv)
 
     //Subscriber
     MAV mav[5] = {MAV(nh, "/leader_pose", 0),
-                  MAV(nh, "/vrpn_client_node/MAV1/pose", 1),
-                  MAV(nh, "/vrpn_client_node/MAV2/pose", 2),
-                  MAV(nh, "/vrpn_client_node/MAV3/pose", 3),
-                  MAV(nh, "/vrpn_client_node/MAV4/pose", 4)};
+                  MAV(nh, "/MAV1/mavros/global_position/ENU/pose", 1),
+                  MAV(nh, "/MAV2/mavros/global_position/ENU/pose", 2),
+                  MAV(nh, "/MAV3/mavros/global_position/ENU/pose", 3),
+                  MAV(nh, "/MAV4/mavros/global_position/ENU/pose", 4)};
 
     //Publisher    
     ros::Publisher desired_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("desired_velocity_raw", 100);
