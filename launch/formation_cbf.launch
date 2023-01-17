@@ -12,11 +12,8 @@
                          1,1,1,0,0,
                          1,1,0,1,0,
                          1,1,0,0,1]</rosparam>
-    <param name="gps_global_topic" value="/MAV1/mavros/global_position/global">
-	<param name="pose_topic" value="/MAV1/mavros/global_position/ENU/pose">
-    
 
-    <param name="pub_pose_topic" value="/mavros/global_position/ENU/pose">
+    <param name="pub_pose_topic" value="/MAV1/mavros/global_position/ENU/pose">
         <include file="$(find mavros)/launch/px4.launch">
         </include>
         <node name="GPS_pos" pkg="offb_self" type="GPS_pos"></node>
