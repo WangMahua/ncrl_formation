@@ -235,6 +235,21 @@ target_link_libraries(formation
 	${catkin_LIBRARIES} )
 target_include_directories(formation PRIVATE
 	include/${PROJECT_NAME}/ )
+
+#		GPS
+add_library(gps_transform
+		include/flight_control/gps_transform.cpp
+		include/flight_control/gps_transform.h
+)
+add_executable(gps_pub src/gps_pub.cpp)
+target_link_libraries(gps_pub
+  ${catkin_LIBRARIES}
+  Eigen3::Eigen
+  gps_transform)
+target_include_directories(formation PRIVATE
+	include/${PROJECT_NAME}/ )
+
+
 #############
 ## Install ##
 #############
