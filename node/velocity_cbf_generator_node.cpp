@@ -324,10 +324,10 @@ int main(int argc, char **argv)
 
 
     CBF_object cbO[5] = {CBF_object(nh, "/vrpn_client_node/obstacle/pose",obstacle_SafeDistance, obstacle_Gamma, 0),
-                         CBF_object(nh, "/vrpn_client_node/MAV1/pose", MAV_SafeDistance, MAV_Gamma, 1),
-                         CBF_object(nh, "/vrpn_client_node/MAV2/pose", MAV_SafeDistance, MAV_Gamma, 2),
-                         CBF_object(nh, "/vrpn_client_node/MAV3/pose", MAV_SafeDistance, MAV_Gamma, 3),
-                         CBF_object(nh, "/vrpn_client_node/MAV4/pose", MAV_SafeDistance, MAV_Gamma, 4)};
+                         CBF_object(nh, "/MAV1/mavros/global_position/ENU/pose", MAV_SafeDistance, MAV_Gamma, 1),
+                         CBF_object(nh, "/MAV2/mavros/global_position/ENU/pose", MAV_SafeDistance, MAV_Gamma, 2),
+                         CBF_object(nh, "/MAV3/mavros/global_position/ENU/pose", MAV_SafeDistance, MAV_Gamma, 3),
+                         CBF_object(nh, "/MAV4/mavros/global_position/ENU/pose", MAV_SafeDistance, MAV_Gamma, 4)};
 
     ROS_INFO("Wait for pose and desired input init");
     while (ros::ok() && (!desired_input_init || !pose_init)) {
@@ -400,7 +400,7 @@ int main(int argc, char **argv)
         //keyboard control
         if(kill_all_drone == 1){
             ROS_WARN("velocity_cbf_kill!");
-            offb_set_mode.request.custom_mode = "POSITION";
+            offb_set_mode.request.custom_mode = "ALTCTL";
             set_mode_client.call(offb_set_mode);
             arm_cmd.request.value = false;
             arming_client.call(arm_cmd);
@@ -426,7 +426,7 @@ int main(int argc, char **argv)
             desired_vel = desired_vel_raw;
         }
         
-        follow_yaw(desired_vel, M_PI/2);
+        follow_yaw(desired_vel, 0);
         local_vel_pub.publish(desired_vel);
 
         ros::spinOnce();
