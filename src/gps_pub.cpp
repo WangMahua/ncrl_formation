@@ -65,7 +65,7 @@ void position_init(Eigen::Quaterniond *q_init)
 {
 	ROS_INFO("Wait for leader GPS data ...");
 	boost::shared_ptr<sensor_msgs::NavSatFix const> leader_gps_msg;
-    leader_gps_msg = ros::topic::waitForMessage<sensor_msgs::NavSatFix>("/MAV1/mavros/global_position/global", ros::Duration(5));
+    leader_gps_msg = ros::topic::waitForMessage<sensor_msgs::NavSatFix>("/mavros/global_position/global", ros::Duration(5));
 
     double latitude = leader_gps_msg->latitude;
 	double longitude = leader_gps_msg->longitude;
@@ -78,7 +78,8 @@ void position_init(Eigen::Quaterniond *q_init)
 
 	ROS_INFO("Wait for self IMU data ...");
 	boost::shared_ptr<sensor_msgs::Imu const> imu_msg;
-    imu_msg = ros::topic::waitForMessage<sensor_msgs::Imu>("/mavros/imu/data", ros::Duration(5));
+    imu_msg = ros::topic::waitForMessage<sensor_msgs::Imu>("/mavros/imu/data"
+    	, ros::Duration(5));
     Eigen::Quaterniond q(imu_msg->orientation.w, imu_msg->orientation.x, imu_msg->orientation.y, imu_msg->orientation.z);
     *q_init = q;
     ROS_INFO("Reseted to current orientation");
@@ -89,18 +90,19 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "GPS_pub");
     ros::NodeHandle nh;
 
-    string gps_pose_topic;
+    string pub_pose_topic;
     string gps_global_topic;
-    ros::param::get("pub_pose_topic", gps_pose_topic);
+    string imu_topic;
+    ros::param::get("pub_pose_topic", pub_pose_topic);
     ros::param::get("gps_global_topic", gps_global_topic);
-
+    ros::param::get("imu_topic", imu_topic);
 //Subscriber
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
-    ros::Subscriber gps_sub = nh.subscribe<sensor_msgs::NavSatFix>("/mavros/global_position/global", 10, gps_pos_cb);	//gps position
-	ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>("/mavros/imu/data", 10, imu_cb );	//odometry orientation
+    ros::Subscriber gps_sub = nh.subscribe<sensor_msgs::NavSatFix>(pub_pose_topic, 10, gps_pos_cb);	//gps position
+	ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>(imu_topic, 10, imu_cb );	//odometry orientation
 
 //Publisher
-	ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>("/mavros/global_position/ENU/pose", 10);
+	ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>(pub_pose_topic, 10);
 
     ros::Rate rate(120);
     

@@ -299,7 +299,7 @@ int main(int argc, char **argv)
     }   
     std::cout<< use_input_s << "\n";
     string MAV_self_topic;
-    ros::param::get("pose_topic", MAV_self_topic);
+    ros::param::get("pub_pose_topic", MAV_self_topic);
     //    subscriber    //
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 100, state_cb);
     ros::Subscriber host_sub = nh.subscribe<geometry_msgs::PoseStamped>(MAV_self_topic, 10, host_pose_cb);
