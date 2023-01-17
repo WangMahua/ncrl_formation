@@ -61,11 +61,11 @@ void imu_cb(const sensor_msgs::Imu::ConstPtr &msg){
 	q_w = msg->orientation.w;
 }
 
-void position_init(Eigen::Quaterniond *q_init)
+void position_imu_init(Eigen::Quaterniond *q_init, string imu_topic)
 {
 	ROS_INFO("Wait for leader GPS data ...");
 	boost::shared_ptr<sensor_msgs::NavSatFix const> leader_gps_msg;
-    leader_gps_msg = ros::topic::waitForMessage<sensor_msgs::NavSatFix>("/mavros/global_position/global", ros::Duration(5));
+    leader_gps_msg = ros::topic::waitForMessage<sensor_msgs::NavSatFix>("/MAV1/mavros/global_position/global", ros::Duration(30));
 
     double latitude = leader_gps_msg->latitude;
 	double longitude = leader_gps_msg->longitude;
@@ -78,8 +78,7 @@ void position_init(Eigen::Quaterniond *q_init)
 
 	ROS_INFO("Wait for self IMU data ...");
 	boost::shared_ptr<sensor_msgs::Imu const> imu_msg;
-    imu_msg = ros::topic::waitForMessage<sensor_msgs::Imu>("/mavros/imu/data"
-    	, ros::Duration(5));
+    imu_msg = ros::topic::waitForMessage<sensor_msgs::Imu>(imu_topic, ros::Duration(30));
     Eigen::Quaterniond q(imu_msg->orientation.w, imu_msg->orientation.x, imu_msg->orientation.y, imu_msg->orientation.z);
     *q_init = q;
     ROS_INFO("Reseted to current orientation");
@@ -109,7 +108,7 @@ int main(int argc, char **argv)
     geometry_msgs::PoseStamped pose;
     Eigen::Quaterniond q_init;
     Eigen::Quaterniond q_re;
-    position_init(&q_init);
+    position_imu_init(&q_init, imu_topic);
     Eigen::Quaterniond q_imu;
 
     while(gps.is_init() == false){
