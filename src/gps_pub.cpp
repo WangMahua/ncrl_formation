@@ -107,7 +107,8 @@ int main(int argc, char **argv)
     
     geometry_msgs::PoseStamped pose;
     Eigen::Quaterniond q_init;
-    Eigen::Quaterniond q_re;
+    Eigen::Quaterniond q_new;
+    Eigen::Quaterniond p_new;
     position_imu_init(&q_init, imu_topic);
     Eigen::Quaterniond q_imu;
 
@@ -121,18 +122,20 @@ int main(int argc, char **argv)
 
 		double now_pos[3];
 		gps.get_ENU(now_pos);
-		pose.pose.position.x = now_pos[0];
-		pose.pose.position.y = now_pos[1];
-		pose.pose.position.z = now_pos[2];
-		
 		Eigen::Quaterniond q_imu(q_w, q_x, q_y, q_z);
-		q_re = q_init.inverse()*q_imu;
+		Eigen::Quaterniond p(0, now_pos[0], now_pos[1], now_pos[2]);
+		p_new = q_init.inverse()*p*q_init;
 
-		pose.pose.orientation.x = q_re.x();
-		pose.pose.orientation.y = q_re.y();
-		pose.pose.orientation.z = q_re.z();
-		pose.pose.orientation.w = q_re.w();
+		pose.pose.position.x = p_new.x();
+		pose.pose.position.y = p_new.y();
+		pose.pose.position.z = p_new.z();
+		
+		q_new = q_init.inverse()*q_imu;
 
+		pose.pose.orientation.x = q_new.x();
+		pose.pose.orientation.y = q_new.y();
+		pose.pose.orientation.z = q_new.z();
+		pose.pose.orientation.w = q_new.w();
 
 		ENU_pub.publish(pose);
 
