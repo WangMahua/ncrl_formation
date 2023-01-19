@@ -30,6 +30,10 @@ double q_w = 0;
 float amsl_alt = 0;
 geometry_msgs::Pose gps_pose;
 geometry_msgs::Pose gps_pose_init;
+float gps_pose_sum_x = 0;
+float gps_pose_sum_y = 0;
+float gps_pose_sum_z = 0;
+int mean_n = 0;
 
 using namespace std;
 
@@ -41,7 +45,16 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
 
 void gps_pos_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
-	gps_pose.position = msg->pose.pose.position;
+	gps_pose_sum_x += msg->pose.pose.position.x;
+	gps_pose_sum_y += msg->pose.pose.position.y;
+	gps_pose_sum_z += msg->pose.pose.position.z;
+	mean_n++;
+	if(mean_n >= 10)
+	{
+		gps_pose.position.x = gps_pose_sum_x/mean_n;
+		gps_pose.position.y = gps_pose_sum_y/mean_n;
+		gps_pose.position.z = gps_pose_sum_z/mean_n;
+	}
 }
 
 void imu_cb(const sensor_msgs::Imu::ConstPtr &msg){
