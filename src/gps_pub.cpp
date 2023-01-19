@@ -5,6 +5,7 @@
 #include <tf/transform_datatypes.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
+#include <mavros_msgs/Altitude.h>
 #include <nav_msgs/Odometry.h>
 #include <mavros_msgs/State.h>
 #include <sensor_msgs/NavSatFix.h>
@@ -26,6 +27,7 @@ double q_x = 0;
 double q_y = 0;
 double q_z = 0;
 double q_w = 0;
+float amsl_alt = 0;
 // double odometry_x = 0;
 // double odometry_y = 0;
 // double odometry_z = 0;
@@ -47,7 +49,7 @@ void gps_pos_cb(const sensor_msgs::NavSatFix::ConstPtr& msg)
 {
 	double latitude = msg->latitude;
 	double longitude = msg->longitude;
-	double altitude = msg->altitude;
+	double altitude = amsl_alt;
 	//set home point
 
 	ROS_INFO_ONCE("Got global position: [%.2f, %.2f, %.2f]", msg->latitude, msg->longitude, msg->altitude);
@@ -61,6 +63,11 @@ void imu_cb(const sensor_msgs::Imu::ConstPtr &msg){
 	q_w = msg->orientation.w;
 }
 
+void altitude_cb(const mavros_msgs::Altitude::ConstPtr& msg) 
+{
+	amsl_alt = msg->amsl;
+}
+
 void position_imu_init(Eigen::Quaterniond *q_init, string imu_topic)
 {
 	ROS_INFO("Wait for leader GPS data ...");
@@ -69,7 +76,11 @@ void position_imu_init(Eigen::Quaterniond *q_init, string imu_topic)
 
     double latitude = leader_gps_msg->latitude;
 	double longitude = leader_gps_msg->longitude;
-	double altitude = leader_gps_msg->altitude;
+	
+	ROS_INFO("Wait for leader Altitude data ...");
+	boost::shared_ptr<mavros_msgs::Altitude const> leader_alt_msg;
+	leader_alt_msg = ros::topic::waitForMessage<mavros_msgs::Altitude>("/MAV1/mavros/altitude", ros::Duration(30));
+	double altitude = leader_alt_msg->amsl;
 
     if(gps.is_init() == false)
 		gps.set_home_longitude_latitude(latitude,longitude,altitude);
@@ -89,16 +100,16 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "GPS_pub");
     ros::NodeHandle nh;
 
-    string pub_pose_topic;
-    string gps_global_topic;
-    string imu_topic;
+    string pub_pose_topic, gps_global_topic, imu_topic, altitude_topic;
     ros::param::get("pub_pose_topic", pub_pose_topic);
     ros::param::get("gps_global_topic", gps_global_topic);
     ros::param::get("imu_topic", imu_topic);
+	ros::param::get("altitude_topic", altitude_topic);
 //Subscriber
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
-    ros::Subscriber gps_sub = nh.subscribe<sensor_msgs::NavSatFix>(pub_pose_topic, 10, gps_pos_cb);	//gps position
+    ros::Subscriber gps_sub = nh.subscribe<sensor_msgs::NavSatFix>(gps_global_topic, 10, gps_pos_cb);	//gps position
 	ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>(imu_topic, 10, imu_cb );	//odometry orientation
+	ros::Subscriber imu_sub = nh.subscribe<mavros_msgs::Altitude>(altitude_topic, 10, altitude_cb);
 
 //Publisher
 	ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>(pub_pose_topic, 10);
