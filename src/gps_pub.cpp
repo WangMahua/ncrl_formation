@@ -27,6 +27,7 @@ double q_x = 0;
 double q_y = 0;
 double q_z = 0;
 double q_w = 0;
+float amsl_alt_init = 0;
 float amsl_alt = 0;
 // double odometry_x = 0;
 // double odometry_y = 0;
@@ -76,14 +77,15 @@ void position_imu_init(Eigen::Quaterniond *q_init, string imu_topic)
 
     double latitude = leader_gps_msg->latitude;
 	double longitude = leader_gps_msg->longitude;
+	double altitude = leader_gps_msg->altitude;
+
+	if(gps.is_init() == false)
+		gps.set_home_longitude_latitude(latitude,longitude,altitude);
 	
 	ROS_INFO("Wait for leader Altitude data ...");
 	boost::shared_ptr<mavros_msgs::Altitude const> leader_alt_msg;
 	leader_alt_msg = ros::topic::waitForMessage<mavros_msgs::Altitude>("/MAV1/mavros/altitude", ros::Duration(30));
-	double altitude = leader_alt_msg->amsl;
-
-    if(gps.is_init() == false)
-		gps.set_home_longitude_latitude(latitude,longitude,altitude);
+	amsl_alt_init = leader_alt_msg->amsl;
 
 	ROS_INFO("Home position is set to leader position");
 
@@ -109,7 +111,7 @@ int main(int argc, char **argv)
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
     ros::Subscriber gps_sub = nh.subscribe<sensor_msgs::NavSatFix>(gps_global_topic, 10, gps_pos_cb);	//gps position
 	ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>(imu_topic, 10, imu_cb );	//odometry orientation
-	ros::Subscriber imu_sub = nh.subscribe<mavros_msgs::Altitude>(altitude_topic, 10, altitude_cb);
+	ros::Subscriber alt_sub = nh.subscribe<mavros_msgs::Altitude>(altitude_topic, 10, altitude_cb);
 
 //Publisher
 	ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>(pub_pose_topic, 10);
@@ -133,6 +135,7 @@ int main(int argc, char **argv)
 
 		double now_pos[3];
 		gps.get_ENU(now_pos);
+		now_pos[2] = amsl_alt;
 		Eigen::Quaterniond q_imu(q_w, q_x, q_y, q_z);
 		Eigen::Quaterniond p(0, now_pos[0], now_pos[1], now_pos[2]);
 		p_new = q_init.inverse()*p*q_init;
