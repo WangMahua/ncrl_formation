@@ -8,9 +8,9 @@
 #include <math.h>
 
 #define LEADER_INIT_X 0.0f
-#define LEADER_INIT_Y 0.55f
+#define LEADER_INIT_Y 0.0f
 #define TAKEOFF_SPEED 0.5f
-#define TAKEOFF_HEIGHT 1.2f
+#define TAKEOFF_HEIGHT 1.5f
 #define LAND_SPEED 0.5f
 #define CONTROL_HZ 100.0f
 
@@ -167,16 +167,17 @@ void waypoint_cb(const geometry_msgs::Point::ConstPtr& msg)
 	if(leader_mode == WAYPOINT_FOLLOWING)
 	{
 		trajectory_t = 0;
-		if(msg->x > 1.5 || msg->y > 1.5 || msg->z > 2)
-			ROS_WARN("Command out of bound");
-		else
-		{
-			wayPoint_initial = leader_pose.pose.position;
-			wayPoint_final = *msg;		
-		}
-		
+		//if(msg->x > 1.5 || msg->y > 1.5 || msg->z > 2)
+		//	ROS_WARN("Command out of bound");
+		//else
+		//{
+		//	wayPoint_initial = leader_pose.pose.position;
+		//		wayPoint_final = *msg;		
+		//}
+		//
+		wayPoint_initial = leader_pose.pose.position;
+		wayPoint_final = *msg;
 	}
-
 	else if(leader_mode == TRACK_RED_POINT)
 	{
 		trajectory_t = 0;

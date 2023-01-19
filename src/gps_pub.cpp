@@ -27,16 +27,9 @@ double q_x = 0;
 double q_y = 0;
 double q_z = 0;
 double q_w = 0;
-float amsl_alt_init = 0;
 float amsl_alt = 0;
-// double odometry_x = 0;
-// double odometry_y = 0;
-// double odometry_z = 0;
-//
-gps_transform gps;
-
-//autopilot ap(gps);
-
+geometry_msgs::Pose gps_pose;
+geometry_msgs::Pose gps_pose_init;
 
 using namespace std;
 
@@ -46,15 +39,9 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
     current_state = *msg;
 }
 
-void gps_pos_cb(const sensor_msgs::NavSatFix::ConstPtr& msg)
+void gps_pos_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
-	double latitude = msg->latitude;
-	double longitude = msg->longitude;
-	double altitude = amsl_alt;
-	//set home point
-
-	ROS_INFO_ONCE("Got global position: [%.2f, %.2f, %.2f]", msg->latitude, msg->longitude, msg->altitude);
-	gps.update(latitude,longitude,altitude);
+	gps_pose.position = msg->pose.pose.position;
 }
 
 void imu_cb(const sensor_msgs::Imu::ConstPtr &msg){
@@ -72,21 +59,9 @@ void altitude_cb(const mavros_msgs::Altitude::ConstPtr& msg)
 void position_imu_init(Eigen::Quaterniond *q_init, string imu_topic)
 {
 	ROS_INFO("Wait for leader GPS data ...");
-	boost::shared_ptr<sensor_msgs::NavSatFix const> leader_gps_msg;
-    leader_gps_msg = ros::topic::waitForMessage<sensor_msgs::NavSatFix>("/MAV1/mavros/global_position/global", ros::Duration(30));
-
-    double latitude = leader_gps_msg->latitude;
-	double longitude = leader_gps_msg->longitude;
-	double altitude = leader_gps_msg->altitude;
-
-	if(gps.is_init() == false)
-		gps.set_home_longitude_latitude(latitude,longitude,altitude);
-	
-	ROS_INFO("Wait for leader Altitude data ...");
-	boost::shared_ptr<mavros_msgs::Altitude const> leader_alt_msg;
-	leader_alt_msg = ros::topic::waitForMessage<mavros_msgs::Altitude>("/MAV1/mavros/altitude", ros::Duration(30));
-	amsl_alt_init = leader_alt_msg->local;
-
+	boost::shared_ptr<nav_msgs::Odometry const> leader_gps_msg;
+    leader_gps_msg = ros::topic::waitForMessage<nav_msgs::Odometry>("/MAV1/mavros/global_position/local", ros::Duration(30));
+    gps_pose_init.position = leader_gps_msg->pose.pose.position;
 	ROS_INFO("Home position is set to leader position");
 
 	ROS_INFO("Wait for self IMU data ...");
@@ -109,7 +84,7 @@ int main(int argc, char **argv)
 	ros::param::get("altitude_topic", altitude_topic);
 //Subscriber
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
-    ros::Subscriber gps_sub = nh.subscribe<sensor_msgs::NavSatFix>(gps_global_topic, 10, gps_pos_cb);	//gps position
+    ros::Subscriber gps_sub = nh.subscribe<nav_msgs::Odometry>(gps_global_topic, 10, gps_pos_cb);	//gps position
 	ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>(imu_topic, 10, imu_cb );	//odometry orientation
 	ros::Subscriber alt_sub = nh.subscribe<mavros_msgs::Altitude>(altitude_topic, 10, altitude_cb);
 
@@ -122,20 +97,16 @@ int main(int argc, char **argv)
     Eigen::Quaterniond q_init;
     Eigen::Quaterniond q_new;
     Eigen::Quaterniond p_new;
-    position_imu_init(&q_init, imu_topic);
     Eigen::Quaterniond q_imu;
-
-    while(gps.is_init() == false){
-		ros::spinOnce();
-        rate.sleep();
-        ROS_INFO("Self GPS is not ready");
-    }
+    float now_pos[3];
+    position_imu_init(&q_init, imu_topic);
 
     while (ros::ok()) {
 
-		double now_pos[3];
-		gps.get_ENU(now_pos);
-		now_pos[2] = amsl_alt;
+    	now_pos[0] = gps_pose.position.x - gps_pose_init.position.x;
+    	now_pos[1] = gps_pose.position.y - gps_pose_init.position.y;
+    	now_pos[2] = gps_pose.position.z - gps_pose_init.position.z;
+
 		Eigen::Quaterniond q_imu(q_w, q_x, q_y, q_z);
 		Eigen::Quaterniond p(0, now_pos[0], now_pos[1], now_pos[2]);
 		p_new = q_init.inverse()*p*q_init;
