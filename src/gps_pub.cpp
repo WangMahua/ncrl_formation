@@ -66,7 +66,7 @@ void imu_cb(const sensor_msgs::Imu::ConstPtr &msg){
 
 void altitude_cb(const mavros_msgs::Altitude::ConstPtr& msg) 
 {
-	amsl_alt = msg->amsl;
+	amsl_alt = msg->local;
 }
 
 void position_imu_init(Eigen::Quaterniond *q_init, string imu_topic)
@@ -85,7 +85,7 @@ void position_imu_init(Eigen::Quaterniond *q_init, string imu_topic)
 	ROS_INFO("Wait for leader Altitude data ...");
 	boost::shared_ptr<mavros_msgs::Altitude const> leader_alt_msg;
 	leader_alt_msg = ros::topic::waitForMessage<mavros_msgs::Altitude>("/MAV1/mavros/altitude", ros::Duration(30));
-	amsl_alt_init = leader_alt_msg->amsl;
+	amsl_alt_init = leader_alt_msg->local;
 
 	ROS_INFO("Home position is set to leader position");
 
