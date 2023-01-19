@@ -59,9 +59,9 @@ void altitude_cb(const mavros_msgs::Altitude::ConstPtr& msg)
 void position_imu_init(Eigen::Quaterniond *q_init, string imu_topic)
 {
 	ROS_INFO("Wait for leader GPS data ...");
-	boost::shared_ptr<nav_msgs::Odometry const> leader_gps_msg;
-    leader_gps_msg = ros::topic::waitForMessage<nav_msgs::Odometry>("/MAV1/mavros/global_position/local", ros::Duration(30));
-    gps_pose_init.position = leader_gps_msg->pose.pose.position;
+	for(int i = 0; i < 10000; i++)
+	    ros::spinOnce();
+	gps_pose_init = gps_pose;
 	ROS_INFO("Home position is set to leader position");
 
 	ROS_INFO("Wait for self IMU data ...");
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     Eigen::Quaterniond q_new;
     Eigen::Quaterniond p_new;
     Eigen::Quaterniond q_imu;
-    float now_pos[3];
+    float now_pos[3] = {0};
     position_imu_init(&q_init, imu_topic);
 
     while (ros::ok()) {
@@ -123,7 +123,6 @@ int main(int argc, char **argv)
 		pose.pose.orientation.w = q_new.w();
 
 		ENU_pub.publish(pose);
-
         ros::spinOnce();
         rate.sleep();
     }

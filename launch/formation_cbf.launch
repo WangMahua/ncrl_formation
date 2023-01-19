@@ -14,15 +14,15 @@
                          1,1,0,0,1]</rosparam>
 
         <param name="pub_pose_topic" value="/MAV1/mavros/global_position/ENU/pose"/>
-        <param name="gps_global_topic" value="/MAV1/mavros/global_position/global"/>
+        <param name="gps_global_topic" value="/MAV1/mavros/global_position/local"/>
         <param name="imu_topic" value="/MAV1/mavros/imu/data"/>
 	    <param name="altitude_topic" value="/MAV1/mavros/altitude"/>
         
         <include file="$(find mavros)/launch/px4.launch">
         </include>
-        <node name="gps_pub" pkg="flight_control" type="gps_pub"></node>
+        <node name="gps_pub" pkg="flight_control" type="gps_pub" output="screen"></node>
         <node name="formation" pkg="flight_control" type="formation"></node>
-        <node name="velocity_cbf_generator" pkg="flight_control" type="velocity_cbf_generator" output="screen">
+        <node name="velocity_cbf_generator" pkg="flight_control" type="velocity_cbf_generator">
             <rosparam subst_value="true">
                 use_input: "velocity"  #velocity,position
            </rosparam>
