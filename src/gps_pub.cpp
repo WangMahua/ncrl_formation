@@ -43,11 +43,11 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
     current_state = *msg;
 }
 
-void gps_pos_cb(const nav_msgs::Odometry::ConstPtr& msg)
+void gps_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
-	gps_pose_sum_x += msg->pose.pose.position.x;
-	gps_pose_sum_y += msg->pose.pose.position.y;
-	gps_pose_sum_z += msg->pose.pose.position.z;
+	gps_pose_sum_x += msg->pose.position.x;
+	gps_pose_sum_y += msg->pose.position.y;
+	gps_pose_sum_z += msg->pose.position.z;
 	mean_n++;
 	if(mean_n >= 10)
 	{
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 	ros::param::get("altitude_topic", altitude_topic);
 //Subscriber
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
-    ros::Subscriber gps_sub = nh.subscribe<nav_msgs::Odometry>(gps_global_topic, 10, gps_pos_cb);	//gps position
+    ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>(gps_global_topic, 10, gps_pos_cb);	//gps position
 	ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>(imu_topic, 10, imu_cb );	//odometry orientation
 	ros::Subscriber alt_sub = nh.subscribe<mavros_msgs::Altitude>(altitude_topic, 10, altitude_cb);
 
