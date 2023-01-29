@@ -43,18 +43,9 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
     current_state = *msg;
 }
 
-void gps_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
+void gps_pos_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
-	gps_pose_sum_x += msg->pose.position.x;
-	gps_pose_sum_y += msg->pose.position.y;
-	gps_pose_sum_z += msg->pose.position.z;
-	mean_n++;
-	if(mean_n >= 10)
-	{
-		gps_pose.position.x = gps_pose_sum_x/mean_n;
-		gps_pose.position.y = gps_pose_sum_y/mean_n;
-		gps_pose.position.z = gps_pose_sum_z/mean_n;
-	}
+	gps_pose.position = msg->pose.pose.position;
 }
 
 void imu_cb(const sensor_msgs::Imu::ConstPtr &msg){
@@ -97,7 +88,7 @@ int main(int argc, char **argv)
 	ros::param::get("altitude_topic", altitude_topic);
 //Subscriber
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
-    ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>(gps_global_topic, 10, gps_pos_cb);	//gps position
+    ros::Subscriber gps_sub = nh.subscribe<nav_msgs::Odometry>(gps_global_topic, 10, gps_pos_cb);	//gps position
 	ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>(imu_topic, 10, imu_cb );	//odometry orientation
 	ros::Subscriber alt_sub = nh.subscribe<mavros_msgs::Altitude>(altitude_topic, 10, altitude_cb);
 
@@ -116,11 +107,10 @@ int main(int argc, char **argv)
 
     while (ros::ok()) {
 
-    	now_pos[0] = gps_pose.position.x - gps_pose_init.position.x;
-    	now_pos[1] = gps_pose.position.y - gps_pose_init.position.y;
-    	now_pos[2] = gps_pose.position.z - gps_pose_init.position.z;
-
 		Eigen::Quaterniond q_imu(q_w, q_x, q_y, q_z);
+		now_pos[0] = gps_pose.position.x - gps_pose_init.position.x;
+		now_pos[1] = gps_pose.position.y - gps_pose_init.position.y;
+		now_pos[2] = gps_pose.position.z - gps_pose_init.position.z;
 		Eigen::Quaterniond p(0, now_pos[0], now_pos[1], now_pos[2]);
 		p_new = q_init.inverse()*p*q_init;
 
@@ -136,6 +126,7 @@ int main(int argc, char **argv)
 		pose.pose.orientation.w = q_new.w();
 
 		ENU_pub.publish(pose);
+	std::cout << gps_pose << std::endl;
         ros::spinOnce();
         rate.sleep();
     }
