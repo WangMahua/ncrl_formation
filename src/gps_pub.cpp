@@ -55,7 +55,7 @@ void position_init()
 	boost::shared_ptr<geometry_msgs::PoseStamped const> msg;
     msg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/MAV1/mavros/local_position/pose", ros::Duration(30));
 	gps_pose_init.position = msg->pose.position;
-	ROS_INFO("Home position is set to leader position");
+	ROS_INFO("Home position is set to leader's position");
 }
 
 int main(int argc, char **argv)
@@ -68,11 +68,11 @@ int main(int argc, char **argv)
     ros::param::get("gps_global_topic", gps_global_topic);
 //Subscriber
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
-    //ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>(gps_global_topic, 10, gps_pos_cb);	//gps position
-    ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>("/MAV1/mavros/local_position/pose", 10, gps_pos_cb);	//gps position
+    ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>(gps_global_topic, 10, gps_pos_cb);	//gps position
+    //ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>("/MAV1/mavros/local_position/pose", 10, gps_pos_cb);	//gps position
 //Publisher
-	//ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>(pub_pose_topic, 10);
-	ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>("/MAV1/mavros/global_position/ENU/pose", 10);
+	ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>(pub_pose_topic, 10);
+	//ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>("/MAV1/mavros/global_position/ENU/pose", 10);
 
     ros::Rate rate(120);
     
