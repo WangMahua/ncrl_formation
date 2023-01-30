@@ -87,6 +87,8 @@ void laplacian_remap(XmlRpc::XmlRpcValue laplacian_param, bool laplacian_map[][5
 }
 
 
+
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "formation");

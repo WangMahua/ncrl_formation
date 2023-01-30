@@ -12,6 +12,8 @@
 #include "OsqpEigen/OsqpEigen.h"
 #include <Eigen/Dense>
 #include <queue>
+#include <sensor_msgs/Imu.h>
+
 #define gravity 9.806
 
 using namespace std;
@@ -282,6 +284,7 @@ void kill_cb(const std_msgs::Int32 msg){
     //store odometry into global variable
     kill_all_drone = msg.data;
 }
+
 int main(int argc, char **argv)
 {
     //  ROS_initialize  //
@@ -298,8 +301,11 @@ int main(int argc, char **argv)
        use_input_s = "position";
     }   
     std::cout<< use_input_s << "\n";
-    string MAV_self_topic;
+
+    string MAV_self_topic, imu_topic_init;
     ros::param::get("pub_pose_topic", MAV_self_topic);
+    ros::param::get("imu_init_topic", imu_topic_init);
+
     //    subscriber    //
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 100, state_cb);
     ros::Subscriber host_sub = nh.subscribe<geometry_msgs::PoseStamped>(MAV_self_topic, 10, host_pose_cb);
@@ -330,6 +336,8 @@ int main(int argc, char **argv)
                          CBF_object(nh, "/MAV4/mavros/global_position/ENU/pose", MAV_SafeDistance, MAV_Gamma, 4)};
 
     ROS_INFO("Wait for pose and desired input init");
+
+
     while (ros::ok() && (!desired_input_init || !pose_init)) {
         ros::spinOnce();
         rate.sleep();
