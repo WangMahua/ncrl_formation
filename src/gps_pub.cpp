@@ -52,9 +52,13 @@ void gps_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 void position_init()
 {
 	ROS_INFO("Wait for leader GPS data ...");
-	boost::shared_ptr<geometry_msgs::PoseStamped const> msg;
-    msg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/MAV1/mavros/local_position/pose", ros::Duration(30));
-	gps_pose_init.position = msg->pose.position;
+	boost::shared_ptr<geometry_msgs::PoseStamped const> xymsg;
+    xymsg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/MAV1/mavros/local_position/pose", ros::Duration(30));
+	boost::shared_ptr<geometry_msgs::PoseStamped const> zmsg;
+    zmsg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/MAV2/mavros/local_position/pose", ros::Duration(30));
+	gps_pose_init.position.x = xymsg->pose.position.x;
+	gps_pose_init.position.y = xymsg->pose.position.y;
+	gps_pose_init.position.z = zmsg->pose.position.z;
 	ROS_INFO("Home position is set to leader's position");
 }
 
