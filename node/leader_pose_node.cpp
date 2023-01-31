@@ -91,6 +91,7 @@ void stop_waypoint(){
 	if(leader_mode == WAYPOINT_FOLLOWING){
     	leader_mode = HOVERING;
 		ROS_INFO("leader stop waypoint");
+		trajectory_t = 0;
 	}
 	else{
 		ROS_WARN("leader not in waypoint");
