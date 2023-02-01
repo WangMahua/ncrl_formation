@@ -49,13 +49,13 @@ void gps_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 	gps_pose.orientation = msg->pose.orientation;
 }
 
-void position_init()
+void position_init(string gps_global_topic)
 {
 	ROS_INFO("Wait for leader GPS data ...");
 	boost::shared_ptr<geometry_msgs::PoseStamped const> xymsg;
     xymsg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/MAV1/mavros/local_position/pose", ros::Duration(30));
 	boost::shared_ptr<geometry_msgs::PoseStamped const> zmsg;
-    zmsg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/MAV2/mavros/local_position/pose", ros::Duration(30));
+    zmsg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>(gps_global_topic, ros::Duration(30));
 	gps_pose_init.position.x = xymsg->pose.position.x;
 	gps_pose_init.position.y = xymsg->pose.position.y;
 	gps_pose_init.position.z = zmsg->pose.position.z;
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     
     geometry_msgs::PoseStamped pose;
     double now_pos[3] = {0};
-    position_init();
+    position_init(gps_global_topic);
     while (ros::ok()) {
 
 		now_pos[0] = gps_pose.position.x - gps_pose_init.position.x;
