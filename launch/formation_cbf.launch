@@ -1,9 +1,9 @@
 <launch>
     <group ns="MAV1">
         <param name="UAV_ID" value="1"/>
-	    <param name="obs_safe_D" value="5"/>
+	    <param name="obs_safe_D" value="3"/>
 	    <param name="obs_gamma" value="0.8"/>
-        <param name="MAV_safe_D" value="5"/>
+        <param name="MAV_safe_D" value="3"/>
         <param name="MAV_gamma" value="0.8"/>
         <param name="delay_step" value="0"/>
 	    <rosparam param="laplacian">

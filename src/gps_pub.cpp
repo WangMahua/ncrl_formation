@@ -13,6 +13,7 @@
 #include <mavros_msgs/CommandTOL.h>
 #include <Eigen/Dense>
 #include <tf2/LinearMath/Quaternion.h>
+#include <std_msgs/Int32.h>
 
 #include <cstdio>
 #include <unistd.h>
@@ -58,6 +59,14 @@ void position_init()
 	ROS_INFO("Home position is set to leader's position");
 }
 
+void init_cb(const std_msgs::Int32::ConstPtr& msg)
+{
+	if(msg->data == 1)
+		position_init();
+	else
+		ROS_WARN("Drone is not on land, can't initialize");
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "GPS_pub");
@@ -68,11 +77,10 @@ int main(int argc, char **argv)
     ros::param::get("gps_global_topic", gps_global_topic);
 //Subscriber
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
-    ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>(gps_global_topic, 10, gps_pos_cb);	//gps position
-    //ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>("/MAV1/mavros/local_position/pose", 10, gps_pos_cb);	//gps position
-//Publisher
+    ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>(gps_global_topic, 10, gps_pos_cb);
+    ros::Subscriber init_sub = nh.subscribe<std_msgs::Int32>("/uav_init", 10, init_cb);
+
 	ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>(pub_pose_topic, 10);
-	//ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>("/MAV1/mavros/global_position/ENU/pose", 10);
 
     ros::Rate rate(120);
     
