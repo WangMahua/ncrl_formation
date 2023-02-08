@@ -13,6 +13,7 @@
 #include <mavros_msgs/CommandTOL.h>
 #include <Eigen/Dense>
 #include <tf2/LinearMath/Quaternion.h>
+#include <std_msgs/Int32.h>
 
 #include <cstdio>
 #include <unistd.h>
@@ -30,6 +31,7 @@ double q_w = 0;
 float amsl_alt = 0;
 geometry_msgs::Pose gps_pose;
 geometry_msgs::Pose gps_pose_init;
+geometry_msgs::Pose gps_pose_relative;
 float gps_pose_sum_x = 0;
 float gps_pose_sum_y = 0;
 float gps_pose_sum_z = 0;
@@ -52,14 +54,23 @@ void gps_pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 void position_init()
 {
 	ROS_INFO("Wait for leader GPS data ...");
-	boost::shared_ptr<geometry_msgs::PoseStamped const> xymsg;
-    xymsg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/MAV1/mavros/local_position/pose", ros::Duration(30));
-	boost::shared_ptr<geometry_msgs::PoseStamped const> zmsg;
-    zmsg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/MAV2/mavros/local_position/pose", ros::Duration(30));
-	gps_pose_init.position.x = xymsg->pose.position.x;
-	gps_pose_init.position.y = xymsg->pose.position.y;
-	gps_pose_init.position.z = zmsg->pose.position.z;
+	boost::shared_ptr<geometry_msgs::PoseStamped const> msg;
+    msg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/MAV2/mavros/local_position/pose", ros::Duration(30));
+	gps_pose_init.position = msg->pose.position;
+	/*boost::shared_ptr<geometry_msgs::PoseStamped const> re_msg;
+    re_msg = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/MAV2/mavros/lla2enu/relative", ros::Duration(30));
+    	gps_pose_relative.position = re_msg->pose.position;
+*/
 	ROS_INFO("Home position is set to leader's position");
+}
+
+void init_cb(const std_msgs::Int32::ConstPtr& msg)
+{
+	if(msg->data == 1)
+		position_init();
+	else
+		ROS_WARN("Drone isn't on land, initialization failed");
+
 }
 
 int main(int argc, char **argv)
@@ -73,10 +84,8 @@ int main(int argc, char **argv)
 //Subscriber
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
     ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>(gps_global_topic, 10, gps_pos_cb);	//gps position
-    //ros::Subscriber gps_sub = nh.subscribe<geometry_msgs::PoseStamped>("/MAV1/mavros/local_position/pose", 10, gps_pos_cb);	//gps position
-//Publisher
+    ros::Subscriber init_sub = nh.subscribe<std_msgs::Int32>("/uav_init", 10, init_cb);	
 	ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>(pub_pose_topic, 10);
-	//ros::Publisher ENU_pub = nh.advertise<geometry_msgs::PoseStamped>("/MAV1/mavros/global_position/ENU/pose", 10);
 
     ros::Rate rate(120);
     
@@ -95,7 +104,6 @@ int main(int argc, char **argv)
 		pose.pose.orientation = gps_pose.orientation;
 
 		ENU_pub.publish(pose);
-		std::cout << pose << std::endl;
         ros::spinOnce();
         rate.sleep();
     }
