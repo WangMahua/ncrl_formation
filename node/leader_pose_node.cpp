@@ -10,11 +10,11 @@
 #define LEADER_INIT_X 0.0f
 #define LEADER_INIT_Y 0.0f
 #define TAKEOFF_SPEED 0.5f
-#define TAKEOFF_HEIGHT 1.5f
+#define TAKEOFF_HEIGHT 2.3f
 #define LAND_SPEED 0.5f
 #define CONTROL_HZ 100.0f
 
-float trajectory_t; 
+float trajectory_t = 0; 
 
 geometry_msgs::PoseStamped leader_pose;
 geometry_msgs::Point wayPoint_final;
@@ -37,6 +37,7 @@ enum {
 int leader_mode;
 int kill_all_drone = 0;
 int start_all_drone = 0;
+int init_all_drone = 0;
 
 void start_takeoff(){
 	if(leader_mode == TAKEOFF || leader_pose.pose.position.z>0.1 ){
@@ -90,6 +91,7 @@ void start_waypoint_following(){
 void stop_waypoint(){
 	if(leader_mode == WAYPOINT_FOLLOWING){
     	leader_mode = HOVERING;
+    	trajectory_t = 0;
 		ROS_INFO("leader stop waypoint");
 	}
 	else{
@@ -117,6 +119,17 @@ void stop_track_red_point(){
 	}
 }
 
+void all_drone_pose_init(){
+	if(leader_mode == LAND || leader_mode == DISARM){
+		ROS_INFO("Initializing all drones...");
+		init_all_drone = 1;
+	}
+	else{
+		ROS_WARN("Drones not on land");
+	}
+}
+
+
 void leader_pose_generate(geometry_msgs::PoseStamped *leader_pose){
 	if(leader_mode == TAKEOFF){
   		leader_pose->pose.position.z += TAKEOFF_SPEED/CONTROL_HZ;
@@ -136,8 +149,8 @@ void leader_pose_generate(geometry_msgs::PoseStamped *leader_pose){
 
 	if(leader_mode == TRAJECTORY_FOLLOWING){
 		trajectory_t += 1/CONTROL_HZ;
-		leader_pose->pose.position.x = cos(trajectory_t*0.3 + M_PI);
-		leader_pose->pose.position.y = sin(trajectory_t*0.3 + M_PI);
+		leader_pose->pose.position.x = 4*cos(trajectory_t*0.3 + M_PI);
+		leader_pose->pose.position.y = 4*sin(trajectory_t*0.3 + M_PI);
 	}
 
 	if(leader_mode == WAYPOINT_FOLLOWING || leader_mode == TRACK_RED_POINT){
@@ -150,9 +163,9 @@ void leader_pose_generate(geometry_msgs::PoseStamped *leader_pose){
 			err.z  = wayPoint_final.z - wayPoint_initial.z;
 		
 			float err_norm = sqrt(pow(err.x, 2) + pow(err.y, 2) + pow(err.z, 2));	
-			leader_pose->pose.position.x = wayPoint_initial.x + err.x/err_norm*trajectory_t*0.3;
-			leader_pose->pose.position.y = wayPoint_initial.y + err.y/err_norm*trajectory_t*0.3;
-			leader_pose->pose.position.z = wayPoint_initial.z + err.z/err_norm*trajectory_t*0.3;
+			leader_pose->pose.position.x = wayPoint_initial.x + err.x/err_norm*trajectory_t*0.6;
+			leader_pose->pose.position.y = wayPoint_initial.y + err.y/err_norm*trajectory_t*0.6;
+			leader_pose->pose.position.z = wayPoint_initial.z + err.z/err_norm*trajectory_t*0.6;
 
 		}
 		else
@@ -211,6 +224,7 @@ int main(int argc, char **argv)
   ros::Publisher leader_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("/leader_pose", 10);
   ros::Publisher uav_killer_pub = nh.advertise<std_msgs::Int32>("/uav_kill", 10);
   ros::Publisher uav_start_pub = nh.advertise<std_msgs::Int32>("/uav_start", 10);
+  ros::Publisher uav_init_pub = nh.advertise<std_msgs::Int32>("/uav_init", 10);
   ros::Subscriber point_sub = nh.subscribe<geometry_msgs::Point>("/waypoint", 10, waypoint_cb);
 
   ros::Rate loop_rate(100);
@@ -225,11 +239,12 @@ int main(int argc, char **argv)
   leader_pose.pose.orientation.z = 0.0;
   leader_pose.pose.orientation.w = 1.0;
 
-	ROS_INFO("(t):takeoff\n(l):land\n(e):start_trajectory\n(w):waypoint_mode\n(r):track_red_point\n(p):stop MAV\n(k):kill_all_drone\n(s):start_all_drone \n");
+	ROS_INFO("(t):takeoff\n(l):land\n(e):start_trajectory\n(w):waypoint_mode\n(r):track_red_point\n(p):stop MAV\n(k):kill_all_drone\n(s):start_all_drone \n(i):init all drone\n");
   while (ros::ok())
   {
         //keyboard control
         int c = getch();
+        init_all_drone = 0;
         //ROS_INFO("C: %d",c);
         if (c != EOF) {
             switch (c) {
@@ -267,7 +282,13 @@ int main(int argc, char **argv)
                 case 115:    // (s) uav_start
 					start_all_drone = 1;
 					ROS_INFO("start all drone");
-                    break;             	
+                    break;         
+                case 105:	// (i) uzv_init
+                	all_drone_pose_init();
+                	std_msgs::Int32 init_msg;
+                	init_msg.data = init_all_drone;
+                	uav_init_pub.publish(init_msg);
+                	break;    	
 			}
         }
     /**
