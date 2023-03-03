@@ -130,10 +130,12 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/flight_control.cpp
 # )
+
 add_library(jetson_tx2
         include/flight_control/jetsonTX2GPIO.cpp
         include/flight_control/jetsonTX2GPIO.h
 )
+
 add_library(qp
    include/flight_control/qptrajectory.cpp
    include/flight_control/qptrajectory.h
@@ -141,6 +143,21 @@ add_library(qp
 target_link_libraries(
     qp  ${PYTHON_LIBRARIES}
 )
+
+add_library(velocity_tracker
+	include/flight_control/Velocity_tracking.cpp
+	include/flight_control/Velocity_tracking.h
+)
+
+add_library(track_cbf
+	include/flight_control/Track_cbf.cpp
+	include/flight_control/Track_cbf.h
+)
+target_link_libraries(track_cbf
+	OsqpEigen::OsqpEigen
+	${catkin_LIBRARIES}
+)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -207,13 +224,16 @@ target_link_libraries(velocity_cbf_generator
 target_include_directories(velocity_cbf_generator PRIVATE
 	include/${PROJECT_NAME}/ )
 
-#		keyboard_panel
-add_executable(keyboard_panel 
-	node/keyboard_panel_node.cpp
-    src/getch.cpp)
-target_link_libraries(keyboard_panel
-	${catkin_LIBRARIES} )
-target_include_directories(keyboard_panel PRIVATE
+#velocity_track_cbf_node
+add_executable(velocity_track_cbf 
+	node/velocity_track_cbf_node.cpp 
+	src/getch.cpp )
+target_link_libraries(velocity_track_cbf 
+	${catkin_LIBRARIES} 
+	OsqpEigen::OsqpEigen 
+	velocity_tracker 
+	track_cbf )
+target_include_directories(velocity_track_cbf PRIVATE
 	include/${PROJECT_NAME}/ )
 
 #		topic_tool

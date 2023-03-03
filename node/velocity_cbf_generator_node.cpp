@@ -97,13 +97,9 @@ void CBF_object::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 }
 
 geometry_msgs::PoseStamped CBF_object::getPose(){return pose;}
-
 bool CBF_object::getExist(){return exist;}
-
 float CBF_object::getSafeDistance(){return safeDistance;}
-
 float CBF_object::getGamma(){return gamma;}
-
 
 void bound_yaw(double* yaw){
         if(*yaw>M_PI)
@@ -242,11 +238,10 @@ int velocity_cbf(geometry_msgs::TwistStamped desired_vel_raw,geometry_msgs::Twis
                     linearMatrix.insert(j,0) = 2*(cbO[i].getPose().pose.position.x - host_mocap.pose.position.x );
                     linearMatrix.insert(j,1) = 2*(cbO[i].getPose().pose.position.y - host_mocap.pose.position.y );
             	    upperBound(j) = cbO[i].getGamma()*(pow((cbO[i].getPose().pose.position.x - host_mocap.pose.position.x ),2)+
-           			 pow((cbO[i].getPose().pose.position.y - host_mocap.pose.position.y ),2)-
-            			 pow(cbO[i].getSafeDistance(),2));
-		    lowerBound(j) = -OsqpEigen::INFTY;
-
-		    j++;
+           			pow((cbO[i].getPose().pose.position.y - host_mocap.pose.position.y ),2)-
+                    pow(cbO[i].getSafeDistance(),2));
+                    lowerBound(j) = -OsqpEigen::INFTY;
+                    j++;
                 }   
             }
 
@@ -316,18 +311,14 @@ int main(int argc, char **argv)
     ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
     ros::Rate rate(100);
 
-    float obstacle_Gamma, obstacle_SafeDistance, MAV_Gamma, MAV_SafeDistance;
-    ros::param::get("obs_gamma", obstacle_Gamma);
-    ros::param::get("obs_safe_D", obstacle_SafeDistance);
-    ros::param::get("MAV_gamma", MAV_Gamma);
-    ros::param::get("MAV_safe_D", MAV_SafeDistance);
+    float target_Gamma, target_trackDistance, MAV_safeDistance;
+    ros::param::get("target_gamma", target_Gamma);
+    ros::param::get("track", target_trackDistance);
+    ros::param::get("MAV_safe_D", MAV_safeDistance);
 
 
-    CBF_object cbO[5] = {CBF_object(nh, "/vrpn_client_node/obstacle/pose",obstacle_SafeDistance, obstacle_Gamma, 0),
-                         CBF_object(nh, "/vrpn_client_node/MAV1/pose", MAV_SafeDistance, MAV_Gamma, 1),
-                         CBF_object(nh, "/vrpn_client_node/MAV2/pose", MAV_SafeDistance, MAV_Gamma, 2),
-                         CBF_object(nh, "/vrpn_client_node/MAV3/pose", MAV_SafeDistance, MAV_Gamma, 3),
-                         CBF_object(nh, "/vrpn_client_node/MAV4/pose", MAV_SafeDistance, MAV_Gamma, 4)};
+    CBF_object cbO[2] = {CBF_object(nh, "/vrpn_client_node/target/pose",target_trackDistance, target_Gamma, 0),
+                         CBF_object(nh, "/vrpn_client_node/MAV1/pose", MAV_safeDistance, target_Gamma, 1)};
 
     ROS_INFO("Wait for pose and desired input init");
     while (ros::ok() && (!desired_input_init || !pose_init)) {
