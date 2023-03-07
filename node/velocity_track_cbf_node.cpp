@@ -20,12 +20,28 @@ using namespace std;
 
 int mode = 0;
 int kill_all_drone = 0;
+int takeOff_height = 1.2;
 mavros_msgs::State current_state;
 
-void take_off(geometry_msgs::TwistStamped* desired_vel, geometry_msgs::PoseStamped self_pos, float height)
+void takeOff(geometry_msgs::TwistStamped* desired_vel, geometry_msgs::PoseStamped self_pos, float height)
 {
     if(abs(height - self_pos.pose.position.z > 0.01))
         desired_vel->twist.linear.z = height - self_pos.pose.position.z;
+}
+
+void land(geometry_msgs::TwistStamped* desired_vel, geometry_msgs::PoseStamped self_pos)
+{
+    if(abs(self_pos.pose.position.z > 0.01))
+        desired_vel->twist.linear.z = -0.15;
+    else
+        desired_vel->twist.linear.z = 0;
+}
+
+void stop(geometry_msgs::TwistStamped* desired_vel)
+{
+    desired_vel->twist.linear.x = 0;
+    desired_vel->twist.linear.y = 0;
+    desired_vel->twist.linear.z = 0;
 }
 
 void kill_cb(const std_msgs::Int32 msg)
@@ -64,7 +80,7 @@ void follow_yaw(geometry_msgs::TwistStamped& desired_vel, double desired_yaw, do
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "velocity_cbf");
-    ros::NodeHandle nh, private_nh("~");
+    ros::NodeHandle nh;
 
     float hz = 120;
 
@@ -83,15 +99,17 @@ int main(int argc, char** argv)
 
     // Object
 
-    float target_Gamma, target_trackDistance, MAV_safeDistance;
-    ros::param::get("target_gamma", target_Gamma);
-    ros::param::get("track", target_trackDistance);
-    ros::param::get("MAV_safe_D", MAV_safeDistance);
+    float cbf_Gamma, trackDistance, safeDistance;
+    string uav_pose_topic;
+    ros::param::get("cbf_gamma", cbf_Gamma);
+    ros::param::get("track_D", trackDistance);
+    ros::param::get("safe_D", safeDistance);
+    ros::param::get("sub_topic", uav_pose_topic);
 
     Track_CBF cbf(nh, "/vrpn_client_node/MAV1/pose", "/vrpn_client_node/target/pose");
     //Virtual_controller vir_acc(1/hz);
 
-    cbf.setCBFparam(0.5, 0.3, 0.6); // track_distance, safe_distance, gamma
+    cbf.setCBFparam(0.6, 0.4, 0.6); // track_distance, safe_distance, gamma
     //vir_acc.setVirtualInputParam(1);
 
     geometry_msgs::TwistStamped desired_vel;
@@ -135,6 +153,7 @@ int main(int argc, char** argv)
     {
         local_vel_pub.publish(desired_vel);
         rate.sleep();
+        
     }
 
     mavros_msgs::SetMode offb_set_mode;
@@ -182,12 +201,23 @@ int main(int argc, char** argv)
 
         if(( ros::Time::now() - cbf.getSelfPose().header.stamp)<ros::Duration(0.5))
         {
-            if(mode == 3)
+            switch(mode)
             {
-                if(cbf.QPsolve_vel_track(desired_vel_raw , &desired_vel) != 0)
-                    desired_vel = desired_vel_raw;
+                case 1:
+                    takeOff(&desired_vel, cbf.getSelfPose(), takeOff_height);
+                    break;
+                case 2:
+                    land(&desired_vel, cbf.getSelfPose());
+                    break;
+                case 3:
+                    if(cbf.QPsolve_vel(desired_vel_raw , &desired_vel, 1) != 0)
+                        desired_vel = desired_vel_raw;
+                    break;
+                case 4:
+                    stop(&desired_vel);
+                    break;
             }
-            if(cbf.QPsolve_vel_avoid(desired_vel, &desired_vel) != 0)
+            if(cbf.QPsolve_vel(desired_vel, &desired_vel, 0) != 0)
                 desired_vel = desired_vel_raw;
             //  ROS_INFO("cbf input:vx: %f vy: %f \n",desired_vel.twist.linear.x,desired_vel.twist.linear.y); 
         }

@@ -46,9 +46,7 @@ public:
     geometry_msgs::PoseStamped getSelfPose();
     double getSelfYaw();
 
-    int QPsolve_vel_track(geometry_msgs::TwistStamped desired_vel_raw, geometry_msgs::TwistStamped* desired_vel);
-    int QPsolve_vel_avoid(geometry_msgs::TwistStamped desired_vel_raw, geometry_msgs::TwistStamped* desired_vel);
-
+    int QPsolve_vel(geometry_msgs::TwistStamped desired_vel_raw, geometry_msgs::TwistStamped* desired_vel, int mode);
 
     bool selfPose_init;
 };
