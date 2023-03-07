@@ -24,6 +24,9 @@ class Track_CBF
 private:
     geometry_msgs::PoseStamped target_pos;
     geometry_msgs::PoseStamped self_pos;
+    double roll;
+    double pitch;
+    double yaw;
     ros::Subscriber target_pos_sub;
     ros::Subscriber self_pos_sub;
     float distance_track;
@@ -40,9 +43,13 @@ public:
     float getSafeDistance();
     float getGamma();
     geometry_msgs::PoseStamped getTargetPose();
+    geometry_msgs::PoseStamped getSelfPose();
+    double getSelfYaw();
 
-    int QPsolve_vel(geometry_msgs::TwistStamped desired_vel_raw, geometry_msgs::TwistStamped* desired_vel);
+    int QPsolve_vel_track(geometry_msgs::TwistStamped desired_vel_raw, geometry_msgs::TwistStamped* desired_vel);
+    int QPsolve_vel_avoid(geometry_msgs::TwistStamped desired_vel_raw, geometry_msgs::TwistStamped* desired_vel);
 
-    bool pose_init;
+
+    bool selfPose_init;
 };
 

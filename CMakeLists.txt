@@ -249,6 +249,14 @@ target_link_libraries(leader_pose
 target_include_directories(leader_pose PRIVATE
 	include/${PROJECT_NAME}/ )
 
+#		single_tracking_GS
+add_executable(single_tracking_GS node/single_tracking_GS.cpp
+	src/getch.cpp)
+target_link_libraries(single_tracking_GS
+	${catkin_LIBRARIES} )
+target_include_directories(single_tracking_GS PRIVATE
+	include/${PROJECT_NAME}/ )
+
 #		formation
 add_executable(formation node/formation_node.cpp)
 target_link_libraries(formation
