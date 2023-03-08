@@ -3,7 +3,7 @@
 Track_CBF::Track_CBF(ros::NodeHandle nh, string self_pos_topic, string target_pos_topic)
 {
     target_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>(target_pos_topic, 10, &Track_CBF::target_pose_cb, this);
-    self_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>(self_pos_topic, 10, &Track_CBF::target_pose_cb, this);
+    self_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>(self_pos_topic, 10, &Track_CBF::self_pose_cb, this);
     distance_safe = distance_track = gamma = 0.5;
     selfPose_init = false;
 }

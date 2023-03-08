@@ -83,11 +83,11 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
   ros::Publisher uav_killer_pub = nh.advertise<std_msgs::Int32>("/uav_kill", 10);
   ros::Publisher mode_pub = nh.advertise<std_msgs::Int32>("/uav_mode", 10);
-  ros::Subscriber uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/MAV1/pose", 10, uav_pose_cb);
+  ros::Subscriber uav_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/MAV2/pose", 10, uav_pose_cb);
 
   ros::Rate loop_rate(100);
 
-ROS_INFO("(t):takeoff\n (l):land\n (r):track_red_point\n (p):stop MAV\n (k):kill_all_drone\n");
+ROS_INFO("\n(t):takeoff\n (l):land\n (r):track_red_point\n (p):stop MAV\n (k):kill_all_drone\n");
   while (ros::ok())
   {
         //keyboard control

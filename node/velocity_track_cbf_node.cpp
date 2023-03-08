@@ -20,19 +20,27 @@ using namespace std;
 
 int mode = 0;
 int kill_all_drone = 0;
-int takeOff_height = 1.2;
+int takeOff_height = 1;
 mavros_msgs::State current_state;
 
 void takeOff(geometry_msgs::TwistStamped* desired_vel, geometry_msgs::PoseStamped self_pos, float height)
 {
     if(abs(height - self_pos.pose.position.z > 0.01))
+    {
+        desired_vel->twist.linear.x = 0;
+        desired_vel->twist.linear.y = 0;
         desired_vel->twist.linear.z = height - self_pos.pose.position.z;
+    }
 }
 
 void land(geometry_msgs::TwistStamped* desired_vel, geometry_msgs::PoseStamped self_pos)
 {
     if(abs(self_pos.pose.position.z > 0.01))
+    {
+        desired_vel->twist.linear.x = 0;
+        desired_vel->twist.linear.y = 0;
         desired_vel->twist.linear.z = -0.15;
+    }
     else
         desired_vel->twist.linear.z = 0;
 }
@@ -106,7 +114,7 @@ int main(int argc, char** argv)
     ros::param::get("safe_D", safeDistance);
     ros::param::get("sub_topic", uav_pose_topic);
 
-    Track_CBF cbf(nh, "/vrpn_client_node/MAV1/pose", "/vrpn_client_node/target/pose");
+    Track_CBF cbf(nh, "/vrpn_client_node/MAV2/pose", "/vrpn_client_node/target/pose");
     //Virtual_controller vir_acc(1/hz);
 
     cbf.setCBFparam(0.6, 0.4, 0.6); // track_distance, safe_distance, gamma
