@@ -124,7 +124,7 @@ int main(int argc, char** argv)
     {
         ros::spinOnce();
         rate.sleep();
-        ROS_INFO("Wait for pose init %d",!cbf.selfPose_init);
+        ROS_INFO("Wait for pose init %d",cbf.selfPose_init);
     }
     ROS_INFO("pose initialized");
     

@@ -9,7 +9,7 @@
         <include file="$(find mavros)/launch/px4.launch">
         </include>
         <node name="topic_tool" pkg="flight_control" type="topic_tool"></node>
-        <node name="velocity_cbf_generator" pkg="flight_control" type="velocity_cbf_generator" output="screen">
+        <node name="velocity_track_cbf" pkg="flight_control" type="velocity_track_cbf" output="screen">
             <rosparam subst_value="true">
                 use_input: "velocity"  #velocity,position
            </rosparam>
