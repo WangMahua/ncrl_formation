@@ -25,7 +25,7 @@ std_msgs::Int32 kill_msg, mode_msg;
 geometry_msgs::PoseStamped uav_pose;
 
 void start_takeoff(){
-	if(leader_mode == TAKEOFF || uav_pose.pose.position.z>0.1 ){
+	if(leader_mode == TAKEOFF || uav_pose.pose.position.z>0.2 ){
 		ROS_WARN("already takeoff");
 	}
 	else{
@@ -36,7 +36,7 @@ void start_takeoff(){
 }
 
 void start_land(){
-	if(leader_mode == LAND || uav_pose.pose.position.z <= 0.01 ){
+	if(leader_mode == LAND || uav_pose.pose.position.z <= 0.1 ){
 		ROS_WARN("already landing or it's on the land");
 	}
 	else{

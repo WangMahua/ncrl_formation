@@ -27,8 +27,8 @@ void takeOff(geometry_msgs::TwistStamped* desired_vel, geometry_msgs::PoseStampe
 {
     if(abs(height - self_pos.pose.position.z > 0.01))
     {
-        desired_vel->twist.linear.x = 0;
-        desired_vel->twist.linear.y = 0;
+        desired_vel->twist.linear.x = -self_pos.pose.position.x;
+        desired_vel->twist.linear.y = -self_pos.pose.position.y;
         desired_vel->twist.linear.z = height - self_pos.pose.position.z;
     }
 }
