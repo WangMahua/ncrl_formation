@@ -1,5 +1,7 @@
 <launch>
-    <group ns="MAV2">
+    <arg name="uav_name" default="MAV2" />
+
+    <group ns="$(arg uav_name)">
         <param name="UAV_ID" value="2"/>
         <param name="cbf_gamma" value="0.6"/>
     	<param name="track_D" value="0.6"/>
