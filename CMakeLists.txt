@@ -214,16 +214,16 @@ add_executable(attitude_compute src/attitude_compute.cpp)
 target_link_libraries(attitude_compute
   ${catkin_LIBRARIES} )
 
-#velocity_track_cbf_node
-add_executable(velocity_track_cbf 
-	node/velocity_track_cbf_node.cpp 
+#leader_track_cbf_node
+add_executable(leader_track_cbf 
+	node/leader_track_cbf_node.cpp 
 	src/getch.cpp )
-target_link_libraries(velocity_track_cbf 
+target_link_libraries(leader_track_cbf 
 	${catkin_LIBRARIES} 
 	OsqpEigen::OsqpEigen 
 	velocity_tracker 
 	track_cbf )
-target_include_directories(velocity_track_cbf PRIVATE
+target_include_directories(leader_track_cbf PRIVATE
 	include/${PROJECT_NAME}/ )
 
 #		topic_tool
@@ -231,12 +231,12 @@ add_executable(topic_tool src/topic_tool.cpp)
 target_link_libraries(topic_tool
 	${catkin_LIBRARIES} )
 
-#		single_tracking_GS
-add_executable(single_tracking_GS node/single_tracking_GS.cpp
+#		tracking_GS
+add_executable(tracking_GS node/tracking_GS.cpp
 	src/getch.cpp)
-target_link_libraries(single_tracking_GS
+target_link_libraries(tracking_GS
 	${catkin_LIBRARIES} )
-target_include_directories(single_tracking_GS PRIVATE
+target_include_directories(tracking_GS PRIVATE
 	include/${PROJECT_NAME}/ )
 
 #############
