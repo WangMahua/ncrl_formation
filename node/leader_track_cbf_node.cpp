@@ -117,7 +117,7 @@ int main(int argc, char** argv)
     Track_CBF cbf(nh, uav_pose_topic, "/vrpn_client_node/MAV1/pose");
     //Virtual_controller vir_acc(1/hz);
 
-    cbf.setCBFparam(0.6, 0.4, 0.6); // track_distance, safe_distance, gamma
+    cbf.setCBFparam(trackDistance, safeDistance, cbf_Gamma); // track_distance, safe_distance, gamma
     //vir_acc.setVirtualInputParam(1);
 
     geometry_msgs::TwistStamped desired_vel;
