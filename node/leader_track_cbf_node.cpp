@@ -114,7 +114,7 @@ int main(int argc, char** argv)
     ros::param::get("safe_D", safeDistance);
     ros::param::get("sub_topic", uav_pose_topic);
 
-    Track_CBF cbf(nh, uav_pose_topic, "/vrpn_client_node/target/pose");
+    Track_CBF cbf(nh, uav_pose_topic, "/vrpn_client_node/MAV1/pose");
     //Virtual_controller vir_acc(1/hz);
 
     cbf.setCBFparam(0.6, 0.4, 0.6); // track_distance, safe_distance, gamma
