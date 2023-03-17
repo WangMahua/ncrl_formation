@@ -62,6 +62,8 @@ void start_attack(){
 	if(leader_mode == HOVERING){
     	leader_mode = ATTACK;
 		ROS_INFO("leader start surrounding");
+		leader_pose.pose.position.x = target_pose.pose.position.x;
+        leader_pose.pose.position.y = target_pose.pose.position.y;
 	}
 	else{
 		ROS_WARN("leader can not start surrounding");
@@ -118,20 +120,21 @@ void leader_pose_generate(geometry_msgs::PoseStamped *leader_pose)
 	}
 	if(leader_mode == LAND)
 	{
-		desired_pose.pose.position.x = 0;
-		desired_pose.pose.position.y = 0;
 		desired_pose.pose.position.z = 0;
 		velocity_ctrl(desired_pose, &leader_vel);
+		leader_vel.twist.linear.x = 0;
+		leader_vel.twist.linear.y = 0;
 	}
 	if(leader_mode == HOVERING)
 	{
 		leader_vel.twist.linear.x = 0;
 		leader_vel.twist.linear.y = 0;
 		leader_vel.twist.linear.z = 0;
-		velocity_ctrl(desired_pose, &leader_vel);
 	}
 	if(leader_mode == ATTACK)
+	{
 		velocity_ctrl(target_pose, target_vel, &leader_vel);
+	}
 
 	leader_pose->pose.position.x = leader_pose->pose.position.x + leader_vel.twist.linear.x*dt;
 	leader_pose->pose.position.y = leader_pose->pose.position.y + leader_vel.twist.linear.y*dt;

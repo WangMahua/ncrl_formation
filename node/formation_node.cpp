@@ -25,7 +25,7 @@ double KPx=1, KPy=1, KPz=1.2;
 //float KPx=5, KPy=5, KPz=1.2;
 double KPyaw = 1;
 double roll = 0, pitch = 0, yaw = 0;
-
+geometry_msgs::TwistStamped leader_vel;
 
 class MAV
 {
@@ -69,7 +69,10 @@ void MAV::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 
 geometry_msgs::PoseStamped MAV::getPose(){return MAV_pose;}
 
-
+void leader_vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg)
+{
+    leader_vel = *msg;
+}
 
 void laplacian_remap(XmlRpc::XmlRpcValue laplacian_param, bool laplacian_map[][5])
 {
@@ -101,17 +104,21 @@ int main(int argc, char **argv)
                   MAV(nh, "/vrpn_client_node/MAV2/pose", 2),
                   MAV(nh, "/vrpn_client_node/MAV3/pose", 3),
                   MAV(nh, "/vrpn_client_node/MAV4/pose", 4)};
+    ros::Subscriber leader_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>("/leader_vel", 10, leader_vel_cb);
 
     //Publisher    
     ros::Publisher desired_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("desired_velocity_raw", 100);
+
+
     XmlRpc::XmlRpcValue laplacian_param;
     nh.getParam("laplacian", laplacian_param);
     ROS_ASSERT(laplacian_param.getType() == XmlRpc::XmlRpcValue::TypeArray);
     bool laplacian_map[5][5] = {0};
     laplacian_remap(laplacian_param, laplacian_map);
 
-    float leader_uav_vector_x[5] = {0, 0, -0.5, 0, 0.5 };  //vector x from leader to uav
-    float leader_uav_vector_y[5] = {0, 0, -0.5 , -0.5*sqrt(2),-0.5};  //vector y from leader to uav
+
+    float leader_uav_vector_x[5] = {0, 0, -1/2 * 1, 1/2 * 1, 0.5 };  //vector x from leader to uav
+    float leader_uav_vector_y[5] = {0, sqrt(3)/4 * 1, -sqrt(3)/4 * 1, -sqrt(3)/4 * 1,-0.5};  //vector y from leader to uav
     float relative_map_x[5][5];
     float relative_map_y[5][5];
     for(int i = 0 ; i<5; i++){
@@ -143,14 +150,24 @@ int main(int argc, char **argv)
         desired_vel.twist.linear.x = 0;
         desired_vel.twist.linear.y = 0;
         desired_vel.twist.linear.z = 0;
-        for(int i =0 ;i<5;i++){
-            if(laplacian_map[MAV::UAV_ID][
-                i] == 1){
-                desired_vel.twist.linear.x += mav[i].getPose().pose.position.x - mav[MAV::UAV_ID].getPose().pose.position.x + relative_map_x[MAV::UAV_ID][i] ;
-                desired_vel.twist.linear.y += mav[i].getPose().pose.position.y - mav[MAV::UAV_ID].getPose().pose.position.y + relative_map_y[MAV::UAV_ID][i] ;
-                desired_vel.twist.linear.z += mav[i].getPose().pose.position.z - mav[MAV::UAV_ID].getPose().pose.position.z;
+        for(int i =0 ;i<5;i++)
+        {
+            if(laplacian_map[MAV::UAV_ID][i] == 1)
+            {
+                desired_vel.twist.linear.x += mav[i].getPose().pose.position.x
+                                            - mav[MAV::UAV_ID].getPose().pose.position.x
+                                            + relative_map_x[MAV::UAV_ID][i];
+                desired_vel.twist.linear.y += mav[i].getPose().pose.position.y
+                                            - mav[MAV::UAV_ID].getPose().pose.position.y
+                                            + relative_map_y[MAV::UAV_ID][i];
+                desired_vel.twist.linear.z += mav[i].getPose().pose.position.z
+                                            - mav[MAV::UAV_ID].getPose().pose.position.z;
             }
         }
+        desired_vel.twist.linear.x += leader_vel.twist.linear.x;
+        desired_vel.twist.linear.y += leader_vel.twist.linear.y;
+        desired_vel.twist.linear.z += leader_vel.twist.linear.z;
+
         desired_vel_pub.publish(desired_vel);
 
         ros::spinOnce();
