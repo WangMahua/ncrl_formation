@@ -110,9 +110,6 @@ int main(int argc, char **argv)
     bool laplacian_map[5][5] = {0};
     laplacian_remap(laplacian_param, laplacian_map);
 
-
-    //float leader_uav_vector_x[5] = {0,0.5,-0.5,-0.5,0.5 };  //vector x from leader to uav
-    //float leader_uav_vector_y[5] = {0,0.5,0.5 ,-0.5,-0.5};  //vector y from leader to uav
     float leader_uav_vector_x[5] = {0, 0, -0.5, 0, 0.5 };  //vector x from leader to uav
     float leader_uav_vector_y[5] = {0, 0, -0.5 , -0.5*sqrt(2),-0.5};  //vector y from leader to uav
     float relative_map_x[5][5];
@@ -147,7 +144,8 @@ int main(int argc, char **argv)
         desired_vel.twist.linear.y = 0;
         desired_vel.twist.linear.z = 0;
         for(int i =0 ;i<5;i++){
-            if(laplacian_map[MAV::UAV_ID][i] == 1){
+            if(laplacian_map[MAV::UAV_ID][
+                i] == 1){
                 desired_vel.twist.linear.x += mav[i].getPose().pose.position.x - mav[MAV::UAV_ID].getPose().pose.position.x + relative_map_x[MAV::UAV_ID][i] ;
                 desired_vel.twist.linear.y += mav[i].getPose().pose.position.y - mav[MAV::UAV_ID].getPose().pose.position.y + relative_map_y[MAV::UAV_ID][i] ;
                 desired_vel.twist.linear.z += mav[i].getPose().pose.position.z - mav[MAV::UAV_ID].getPose().pose.position.z;

@@ -7,9 +7,8 @@
 #include <tf/tf.h>
 #include <math.h>
 
-#define LEADER_INIT_X -1.0f
+#define LEADER_INIT_X 0.0f
 #define LEADER_INIT_Y 0.0f
-#define TAKEOFF_SPEED 0.5f
 #define TAKEOFF_HEIGHT 1.2f
 #define LAND_SPEED 0.8f
 #define CONTROL_HZ 100.0f
@@ -17,8 +16,11 @@
 float trajectory_t; 
 
 geometry_msgs::PoseStamped leader_pose;
-geometry_msgs::Point wayPoint_final;
-geometry_msgs::Point wayPoint_initial;
+geometry_msgs::TwistStamped leader_vel;
+geometry_msgs::PoseStamped target_pose;
+geometry_msgs::TwistStamped target_vel;
+geometry_msgs::PoseStamped desired_pose;
+
 
 int track_count = 0;
 float sum_x = 0;
@@ -29,9 +31,7 @@ enum {
 	HOVERING,
     TAKEOFF,
     LAND,
-    TRAJECTORY_FOLLOWING,
-	WAYPOINT_FOLLOWING,
-	TRACK_RED_POINT,
+    ATTACK,
 }LeaderMode;
 
 int leader_mode;
@@ -58,148 +58,94 @@ void start_land(){
 	}
 }
 
-void start_trajectory_following(){
+void start_attack(){
 	if(leader_mode == HOVERING){
-    	leader_mode = TRAJECTORY_FOLLOWING;
-		ROS_INFO("leader start trajectory");
+    	leader_mode = ATTACK;
+		ROS_INFO("leader start surrounding");
 	}
 	else{
-		ROS_WARN("leader can not start trajectory");
+		ROS_WARN("leader can not start surrounding");
 	}
 }
-void stop_trajectory(){
-	if(leader_mode == TRAJECTORY_FOLLOWING){
+
+void leader_stop(){
+	if(leader_mode != HOVERING){
     	leader_mode = HOVERING;
-		ROS_INFO("leader stop trajectory");
+		ROS_INFO("leader stop");
 	}
 	else{
-		ROS_WARN("leader not in trajectory");
+		ROS_WARN("leader already hovering");
 	}
 }
 
-void start_waypoint_following(){
-	if(leader_mode == HOVERING){
-    	leader_mode = WAYPOINT_FOLLOWING;
-		ROS_INFO("leader start waypoint");
-	}
-	else{
-		ROS_WARN("leader can not start waypoint");
-	}
-}
-
-void stop_waypoint(){
-	if(leader_mode == WAYPOINT_FOLLOWING){
-    	leader_mode = HOVERING;
-		ROS_INFO("leader stop waypoint");
-	}
-	else{
-		ROS_WARN("leader not in waypoint");
-	}
-}
-
-void start_track_red_point(){
-	if(leader_mode == HOVERING){
-    	leader_mode = TRACK_RED_POINT;
-		ROS_INFO("leader start tracking point");
-	}
-	else{
-		ROS_WARN("leader can not start tracking");
-	}
-}
-
-void stop_track_red_point(){
-	if(leader_mode == TRACK_RED_POINT){
-    	leader_mode = HOVERING;
-		ROS_INFO("leader stop tracking");
-	}
-	else{
-		ROS_WARN("leader not tracking");
-	}
-}
-
-void leader_pose_generate(geometry_msgs::PoseStamped *leader_pose){
-	if(leader_mode == TAKEOFF){
-  		leader_pose->pose.position.z += TAKEOFF_SPEED/CONTROL_HZ;
-		if( leader_pose->pose.position.z >= TAKEOFF_HEIGHT ){
-			leader_pose->pose.position.z = TAKEOFF_HEIGHT;
-			leader_mode = HOVERING;
-		}
-	}
-
-	if(leader_mode == LAND){
-  		leader_pose->pose.position.z -= LAND_SPEED/CONTROL_HZ;
-		if( leader_pose->pose.position.z <= 0 ){
-			leader_pose->pose.position.z = 0;
-			leader_mode = DISARM;
-		}
-	}
-
-	if(leader_mode == TRAJECTORY_FOLLOWING){
-		trajectory_t += 1/CONTROL_HZ;
-		leader_pose->pose.position.x = cos(trajectory_t*0.3 + M_PI);
-		leader_pose->pose.position.y = sin(trajectory_t*0.3 + M_PI);
-	}
-
-	if(leader_mode == WAYPOINT_FOLLOWING || leader_mode == TRACK_RED_POINT){
-		trajectory_t += 1/CONTROL_HZ;
-		if(abs(leader_pose->pose.position.x -wayPoint_final.x) > 0.01 || abs(leader_pose->pose.position.y - wayPoint_final.y) > 0.01 || abs(leader_pose->pose.position.z - wayPoint_final.z) > 0.01 )
-		{
-			geometry_msgs::Point err;
-			err.x  = wayPoint_final.x - wayPoint_initial.x;
-			err.y  = wayPoint_final.y - wayPoint_initial.y;
-			err.z  = wayPoint_final.z - wayPoint_initial.z;
-		
-			float err_norm = sqrt(pow(err.x, 2) + pow(err.y, 2) + pow(err.z, 2));	
-			leader_pose->pose.position.x = wayPoint_initial.x + err.x/err_norm*trajectory_t*0.3;
-			leader_pose->pose.position.y = wayPoint_initial.y + err.y/err_norm*trajectory_t*0.3;
-			leader_pose->pose.position.z = wayPoint_initial.z + err.z/err_norm*trajectory_t*0.3;
-
-		}
-		else
-		{
-
-		}
-	}
-}
-
-void waypoint_cb(const geometry_msgs::Point::ConstPtr& msg)
+void velocity_ctrl(geometry_msgs::PoseStamped pose_d, geometry_msgs::TwistStamped *self_vel)
 {
-	if(leader_mode == WAYPOINT_FOLLOWING)
-	{
-		trajectory_t = 0;
-		if(msg->x > 1.5 || msg->y > 1.5 || msg->z > 2)
-			ROS_WARN("Command out of bound");
-		else
-		{
-			wayPoint_initial = leader_pose.pose.position;
-			wayPoint_final = *msg;		
-		}
-		
-	}
-
-	else if(leader_mode == TRACK_RED_POINT)
-	{
-		trajectory_t = 0;
-		if(msg->x > 1.5 || msg->y > 1.5)
-			ROS_WARN("Command out of bound");
-		else
-		{
-			wayPoint_initial = leader_pose.pose.position;
-			sum_x += msg->x;
-			sum_y += msg->y;
-			track_count ++;
-			if(track_count == 100)
-			{
-				wayPoint_final.x = sum_x/100;
-				wayPoint_final.y = sum_y/100;
-				sum_x = sum_y = track_count = 0;
-			}
-		}
-	}
-	else
-		ROS_WARN("leader not in waypoint mode");
+	float kp = 1.5;
+	float err_x = pose_d.pose.position.x - leader_pose.pose.position.x;
+	float err_y = pose_d.pose.position.y - leader_pose.pose.position.y;
+	float err_z = pose_d.pose.position.z - leader_pose.pose.position.z;
+	self_vel->twist.linear.x = kp*err_x;
+	self_vel->twist.linear.y = kp*err_y;
+	self_vel->twist.linear.z = kp*err_z;
 }
 
+void velocity_ctrl(geometry_msgs::PoseStamped pose_d, geometry_msgs::TwistStamped vel_d, geometry_msgs::TwistStamped *self_vel)
+{
+	float kp = 1.5;
+	float err_x = pose_d.pose.position.x - leader_pose.pose.position.x;
+	float err_y = pose_d.pose.position.y - leader_pose.pose.position.y;
+	float err_z = pose_d.pose.position.z - leader_pose.pose.position.z;
+	self_vel->twist.linear.x = kp*err_x + vel_d.twist.linear.x;
+	self_vel->twist.linear.y = kp*err_y + vel_d.twist.linear.y;
+	self_vel->twist.linear.z = 0;
+	if(pose_d.pose.position.z >= 0.5)
+		self_vel->twist.linear.z = kp*err_z + vel_d.twist.linear.z;
+}
+
+void leader_pose_generate(geometry_msgs::PoseStamped *leader_pose)
+{
+	float dt = 1/CONTROL_HZ;
+
+	if(leader_mode == TAKEOFF)
+	{
+		desired_pose.pose.position.x = 0;
+		desired_pose.pose.position.y = 0;
+		desired_pose.pose.position.z = 1.0;
+		velocity_ctrl(desired_pose, &leader_vel);
+		float vel_norm = sqrt(pow(leader_vel.twist.linear.x, 2) + pow(leader_vel.twist.linear.y, 2) + pow(leader_vel.twist.linear.z, 2));
+		if(vel_norm < 0.05 && leader_pose->pose.position.z > 0.5)
+			leader_mode = HOVERING;
+	}
+	if(leader_mode == LAND)
+	{
+		desired_pose.pose.position.x = 0;
+		desired_pose.pose.position.y = 0;
+		desired_pose.pose.position.z = 0;
+		velocity_ctrl(desired_pose, &leader_vel);
+	}
+	if(leader_mode == HOVERING)
+	{
+		leader_vel.twist.linear.x = 0;
+		leader_vel.twist.linear.y = 0;
+		leader_vel.twist.linear.z = 0;
+		velocity_ctrl(desired_pose, &leader_vel);
+	}
+	if(leader_mode == ATTACK)
+		velocity_ctrl(target_pose, target_vel, &leader_vel);
+
+	leader_pose->pose.position.x = leader_pose->pose.position.x + leader_vel.twist.linear.x*dt;
+	leader_pose->pose.position.y = leader_pose->pose.position.y + leader_vel.twist.linear.y*dt;
+	leader_pose->pose.position.z = leader_pose->pose.position.z + leader_vel.twist.linear.z*dt;
+}
+
+void target_pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
+{
+	target_pose = *msg;
+}
+void target_vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg)
+{
+	target_vel = *msg;
+}
 
 int main(int argc, char **argv)
 {
@@ -207,12 +153,16 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "leader_pose_publisher");
 
   ros::NodeHandle nh;
+
   ros::Publisher leader_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("/leader_pose", 10);
+  ros::Publisher leader_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("/leader_vel", 10);
   ros::Publisher uav_killer_pub = nh.advertise<std_msgs::Int32>("/uav_kill", 10);
   ros::Publisher uav_start_pub = nh.advertise<std_msgs::Int32>("/uav_start", 10);
-  ros::Subscriber point_sub = nh.subscribe<geometry_msgs::Point>("/waypoint", 10, waypoint_cb);
 
-  ros::Rate loop_rate(100);
+  ros::Subscriber target_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/target/pose", 10, target_pose_cb);
+  ros::Subscriber target_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>("/target/mavros/local_position/velocity_local", 10, target_vel_cb);
+
+  ros::Rate loop_rate(CONTROL_HZ);
   
   leader_pose.header.stamp = ros::Time::now();
   leader_pose.header.frame_id = "map";
@@ -223,8 +173,7 @@ int main(int argc, char **argv)
   leader_pose.pose.orientation.y = 0.0;
   leader_pose.pose.orientation.z = 0.0;
   leader_pose.pose.orientation.w = 1.0;
-
-	ROS_INFO("(t):takeoff\n (l):land\n (e):start_trajectory\n (w):waypoint_mode\n (r):track_red_point\n (p):stop MAV\n (k):kill_all_drone\n (s):start_all_drone \n");
+  ROS_INFO("(t):takeoff\n (l):land\n (a):attack\n (p):stop MAV\n (k):kill_all_drone\n (s):start_all_drone \n");
   while (ros::ok())
   {
         //keyboard control
@@ -234,38 +183,21 @@ int main(int argc, char **argv)
             switch (c) {
                 case 116:    // (t) takeoff
                     start_takeoff();
+                    start_all_drone = 1;
+					ROS_INFO("start all drone");
                     break;
                 case 108:    // (l) land
                     start_land();
                     break;
-                case 101:    // (e) start_trajectory_following
-                    start_trajectory_following();
+                case 97:    // (a) land
+                    start_attack();
                     break;
-                case 119:    // (w) start_wayPoint_following
-                	wayPoint_initial = leader_pose.pose.position;
-					wayPoint_final = leader_pose.pose.position;
-                    start_waypoint_following();
-                    break;
-				case 114:    // (t) start_track_red_point
-                	wayPoint_initial = leader_pose.pose.position;
-					wayPoint_final = leader_pose.pose.position;
-                   	start_track_red_point();
-                    break;	
-                case 112:    // (p) stop_trajectory_following
-                	if(leader_mode == TRAJECTORY_FOLLOWING)
-                    	stop_trajectory();
-                    else if (leader_mode == WAYPOINT_FOLLOWING)
-                    	stop_waypoint();
-					else if (leader_mode == TRACK_RED_POINT)
-						stop_track_red_point();
-                    break;
+                case 112:    // (p) stop
+                	leader_stop();
+                	break;
                 case 107:    // (k) uav_kill
 					kill_all_drone = 1;
 					ROS_WARN("kill all drone");
-                    break;
-                case 115:    // (s) uav_start
-					start_all_drone = 1;
-					ROS_INFO("start all drone");
                     break;
 			}
         }
@@ -281,6 +213,7 @@ int main(int argc, char **argv)
 	start_msg.data=start_all_drone;
 	uav_start_pub.publish(start_msg);
     leader_pose_pub.publish(leader_pose);
+    leader_vel_pub.publish(leader_vel);
     ros::spinOnce();
 
     loop_rate.sleep();
