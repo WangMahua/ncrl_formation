@@ -8,10 +8,10 @@
     	<param name="delay_step" value="0"/>
 	<rosparam param="laplacian">
                         [1,0,0,0,0,
-                         1,1,0,0,0,
-                         1,0,1,0,0,
-                         1,1,0,1,0,
-                         1,1,0,0,1]</rosparam>
+                         1,0,0,0,0,
+                         1,0,1,0,1,
+                         1,0,1,0,1,
+                         1,0,1,0,1]</rosparam>
 	<param name="sub_topic" value="/vrpn_client_node/MAV2/pose"/>
 
         <include file="$(find mavros)/launch/px4.launch">
