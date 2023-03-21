@@ -20,6 +20,7 @@ geometry_msgs::TwistStamped leader_vel;
 geometry_msgs::PoseStamped target_pose;
 geometry_msgs::TwistStamped target_vel;
 geometry_msgs::PoseStamped desired_pose;
+std_msgs::Int32 init_drone;
 
 
 int track_count = 0;
@@ -37,6 +38,7 @@ enum {
 int leader_mode;
 int kill_all_drone = 0;
 int start_all_drone = 0;
+int init_all_drone = 0;
 
 void start_takeoff(){
 	if(leader_mode == TAKEOFF || leader_pose.pose.position.z>0.1 ){
@@ -77,6 +79,16 @@ void leader_stop(){
 	}
 	else{
 		ROS_WARN("leader already hovering");
+	}
+}
+
+void all_drone_pose_init(){
+	if(leader_mode == LAND || leader_mode == DISARM){
+		ROS_INFO("Initializing all drones...");
+		init_all_drone = 1;
+	}
+	else{
+		ROS_WARN("Drones not on land");
 	}
 }
 
@@ -161,6 +173,7 @@ int main(int argc, char **argv)
   ros::Publisher leader_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("/leader_vel", 10);
   ros::Publisher uav_killer_pub = nh.advertise<std_msgs::Int32>("/uav_kill", 10);
   ros::Publisher uav_start_pub = nh.advertise<std_msgs::Int32>("/uav_start", 10);
+  ros::Publisher uav_init_pub = nh.advertise<std_msgs::Int32>("/uav_init", 10);
 
   ros::Subscriber target_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/target/pose", 10, target_pose_cb);
   ros::Subscriber target_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>("/target/mavros/local_position/velocity_local", 10, target_vel_cb);
@@ -176,10 +189,11 @@ int main(int argc, char **argv)
   leader_pose.pose.orientation.y = 0.0;
   leader_pose.pose.orientation.z = 0.0;
   leader_pose.pose.orientation.w = 1.0;
-  ROS_INFO("(t):takeoff\n (l):land\n (a):attack\n (p):stop MAV\n (k):kill_all_drone\n (s):start_all_drone \n");
+  ROS_INFO("(t):takeoff\n (l):land\n (a):attack\n (p):stop MAV\n (k):kill_all_drone\n (s):start_all_drone\n (i):uav_init\n");
   while (ros::ok())
   {
         //keyboard control
+  		init_all_drone = 0;
         int c = getch();
         //ROS_INFO("C: %d",c);
         if (c != EOF) {
@@ -202,6 +216,11 @@ int main(int argc, char **argv)
 					kill_all_drone = 1;
 					ROS_WARN("kill all drone");
                     break;
+                case 105:	// (i) uav_init
+                	all_drone_pose_init();
+                	init_drone.data = init_all_drone;
+                	uav_init_pub.publish(init_drone);
+                	break;
 			}
         }
     /**
