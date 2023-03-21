@@ -168,6 +168,14 @@ int main(int argc, char **argv)
         desired_vel.twist.linear.y += leader_vel.twist.linear.y;
         desired_vel.twist.linear.z += leader_vel.twist.linear.z;
 
+        float vel_norm = sqrt(pow(desired_vel.twist.linear.x, 2) + pow(desired_vel.twist.linear.y, 2) + pow(desired_vel.twist.linear.z, 2));
+        if(vel_norm > 5)
+        {
+            desired_vel.twist.linear.x *= 5/vel_norm;
+            desired_vel.twist.linear.y *= 5/vel_norm;
+            desired_vel.twist.linear.z *= 5/vel_norm;
+        }
+
         desired_vel_pub.publish(desired_vel);
 
         ros::spinOnce();

@@ -321,7 +321,7 @@ int main(int argc, char **argv)
     ros::param::get("MAV_safe_D", MAV_SafeDistance);
 
 
-    CBF_object cbO[5] = {CBF_object(nh, "/Target/mavros/global_position/global",obstacle_SafeDistance, obstacle_Gamma, 0),
+    CBF_object cbO[5] = {CBF_object(nh, "/leader_pose",obstacle_SafeDistance, obstacle_Gamma, 0),
                          CBF_object(nh, "/MAV1/mavros/global_position/global", MAV_SafeDistance, MAV_Gamma, 1),
                          CBF_object(nh, "/MAV2/mavros/global_position/global", MAV_SafeDistance, MAV_Gamma, 2),
                          CBF_object(nh, "/MAV3/mavros/global_position/global", MAV_SafeDistance, MAV_Gamma, 3),
