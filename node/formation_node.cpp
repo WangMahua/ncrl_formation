@@ -56,7 +56,7 @@ void MAV::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
     if(id != UAV_ID)
     {
-	pose_queue.push(*msg);
+	   pose_queue.push(*msg);
 	if(pose_queue.size() >= delay_step)
 	{
 	    MAV_pose = pose_queue.front();
@@ -64,7 +64,7 @@ void MAV::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 	}
     }
     else
-	MAV_pose = *msg;
+	   MAV_pose = *msg;
 }
 
 geometry_msgs::PoseStamped MAV::getPose(){return MAV_pose;}
@@ -99,11 +99,11 @@ int main(int argc, char **argv)
     ros::param::get("delay_step", MAV::delay_step);
 
     //Subscriber
-    MAV mav[5] = {MAV(nh, "/Target/mavros/global_position/global", 0),
-                  MAV(nh, "/MAV1/mavros/global_position/global", 1),
-                  MAV(nh, "/MAV2/mavros/global_position/global", 2),
-                  MAV(nh, "/MAV3/mavros/global_position/global", 3),
-                  MAV(nh, "/MAV4/mavros/global_position/global", 4)};
+    MAV mav[5] = {MAV(nh, "/leader_pose", 0),
+                  MAV(nh, "/MAV1/mavros/local_position/pose", 1),
+                  MAV(nh, "/MAV2/mavros/local_position/pose", 2),
+                  MAV(nh, "/MAV3/mavros/local_position/pose", 3),
+                  MAV(nh, "/MAV4/mavros/local_position/pose", 4)};
     ros::Subscriber leader_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>("/leader_vel", 10, leader_vel_cb);
 
     //Publisher    
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     bool laplacian_map[5][5] = {0};
     laplacian_remap(laplacian_param, laplacian_map);
 
-    float d = 3;
+    float d = 3.0;
     float leader_uav_vector_x[5] = {0, 0, 0, -1/2*sqrt(3)*d, 1/2*sqrt(3)*d};  //active: mav2, mav4 
     float leader_uav_vector_y[5] = {0, 0, d,         -1/2*d,        -1/2*d};  //vector y from leader to uav
     float relative_map_x[5][5];

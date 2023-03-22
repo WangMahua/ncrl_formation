@@ -300,7 +300,7 @@ int main(int argc, char **argv)
     std::cout<< use_input_s << "\n";
     //    subscriber    //
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 100, state_cb);
-    ros::Subscriber host_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/global_position/global", 10, host_pose_cb);
+    ros::Subscriber host_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/local", 10, host_pose_cb);
     
     ros::Subscriber desired_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("desired_pose", 10, desired_pose_cb);
     ros::Subscriber desired_velocity_sub = nh.subscribe<geometry_msgs::TwistStamped>("desired_velocity_raw", 10, desired_vel_cb);
@@ -322,10 +322,10 @@ int main(int argc, char **argv)
 
 
     CBF_object cbO[5] = {CBF_object(nh, "/leader_pose",obstacle_SafeDistance, obstacle_Gamma, 0),
-                         CBF_object(nh, "/MAV1/mavros/global_position/global", MAV_SafeDistance, MAV_Gamma, 1),
-                         CBF_object(nh, "/MAV2/mavros/global_position/global", MAV_SafeDistance, MAV_Gamma, 2),
-                         CBF_object(nh, "/MAV3/mavros/global_position/global", MAV_SafeDistance, MAV_Gamma, 3),
-                         CBF_object(nh, "/MAV4/mavros/global_position/global", MAV_SafeDistance, MAV_Gamma, 4)};
+                         CBF_object(nh, "/MAV1/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 1),
+                         CBF_object(nh, "/MAV2/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 2),
+                         CBF_object(nh, "/MAV3/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 3),
+                         CBF_object(nh, "/MAV4/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 4)};
 
     ROS_INFO("Wait for pose and desired input init");
     while (ros::ok() && (!desired_input_init || !pose_init)) {
