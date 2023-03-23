@@ -100,10 +100,10 @@ int main(int argc, char **argv)
 
     //Subscriber
     MAV mav[5] = {MAV(nh, "/leader_pose", 0),
-                  MAV(nh, "/MAV1/mavros/local_position/pose", 1),
-                  MAV(nh, "/MAV2/mavros/local_position/pose", 2),
-                  MAV(nh, "/MAV3/mavros/local_position/pose", 3),
-                  MAV(nh, "/MAV4/mavros/local_position/pose", 4)};
+                  MAV(nh, "/MAV1/mavros/local_position/pose_initialized", 1),
+                  MAV(nh, "/MAV2/mavros/local_position/pose_initialized", 2),
+                  MAV(nh, "/MAV3/mavros/local_position/pose_initialized", 3),
+                  MAV(nh, "/MAV4/mavros/local_position/pose_initialized", 4)};
     ros::Subscriber leader_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>("/leader_vel", 10, leader_vel_cb);
 
     //Publisher    
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     bool laplacian_map[5][5] = {0};
     laplacian_remap(laplacian_param, laplacian_map);
 
-    float d = 3.0;
+    float d = 4.0;
     float leader_uav_vector_x[5] = {0, 0, 0, -1/2*sqrt(3)*d, 1/2*sqrt(3)*d};  //active: mav2, mav4 
     float leader_uav_vector_y[5] = {0, 0, d,         -1/2*d,        -1/2*d};  //vector y from leader to uav
     float relative_map_x[5][5];

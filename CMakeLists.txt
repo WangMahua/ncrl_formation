@@ -177,6 +177,10 @@ add_executable(gps_init src/gps_init.cpp)
 target_link_libraries(gps_init
   ${catkin_LIBRARIES} )
 
+add_executable(gps_init_backup src/gps_init_backup.cpp)
+target_link_libraries(gps_init_backup
+  ${catkin_LIBRARIES} )
+
 #attitude_control
 add_executable(attitude_control src/attitude_control.cpp)
 target_link_libraries(attitude_control
