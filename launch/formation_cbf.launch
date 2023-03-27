@@ -14,7 +14,7 @@
                              1,0,1,0,1,
                              1,0,1,0,1]</rosparam>
         <include file="$(find mavros)/launch/px4.launch"></include> 
-        <node name="gps_init_py" pkg="flight_control" type="gps_init.py"></node>
+        <node name="gps_init_py" pkg="flight_control" type="gps_init.py" output="screen"></node>
         <node name="formation" pkg="flight_control" type="formation"></node>
         <node name="velocity_cbf_generator" pkg="flight_control" type="velocity_cbf_generator" output="screen">
             <rosparam subst_value="true">
