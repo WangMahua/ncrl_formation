@@ -57,6 +57,9 @@ if __name__ == '__main__':
 	gps_pose_pub = rospy.Publisher('mavros/local_position/pose_initialized', PoseStamped, queue_size=10)	
 
 	rate = rospy.Rate(100)
+
+	print("gps_init node constructed")
+
 	while not rospy.is_shutdown():
 
 		gps_pose_initialized.pose.position.x = gps_pose.pose.position.x - gps_pose_init.pose.position.x + pose_relative.pose.position.x
