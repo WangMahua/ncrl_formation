@@ -1,12 +1,14 @@
+#!/usr/bin/env python3
+
 import rospy
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix
 from std_msgs.msg import Int32
 import pymap3d as pm
 
-latO = 24.7862363
-lonO = 120.9972302
-altO = 150.50120232826788
+latO = 0
+lonO = 0
+altO = 0
 
 lat = 0
 lon = 0
@@ -46,7 +48,7 @@ def pose_init_cb(msg):
 
 if __name__ == '__main__':
 	
-	rospy.init_node('gps_init')
+	rospy.init_node('gps_init_py')
 	pose_init_sub = rospy.Subscriber('/uav_init', Int32, pose_init_cb)
 	gps_origin_sub = rospy.Subscriber('/Target/mavros/global_position/global', NavSatFix, gps_origin_cb)
 	gps_self_sub = rospy.Subscriber('mavros/global_position/global', NavSatFix, gps_self_cb)
