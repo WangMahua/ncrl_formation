@@ -42,9 +42,9 @@ def pose_init_cb(msg):
 		pose_relative.pose.position.y = pm.geodetic2enu(lat, lon, alt, latO, lonO, altO)[1]
 		pose_relative.pose.position.z = pm.geodetic2enu(lat, lon, alt, latO, lonO, altO)[2]
 		gps_pose_init = gps_pose
-		print("pose initialized")
+		rospy.loginfo("pose initialized")
 	else:
-		print("cannot init pose")
+		rospy.loginfo("cannot init pose")
 
 if __name__ == '__main__':
 	
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
 	rate = rospy.Rate(100)
 
-	print("gps_init node constructed")
+	rospy.loginfo("gps_init node constructed")
 
 	while not rospy.is_shutdown():
 
