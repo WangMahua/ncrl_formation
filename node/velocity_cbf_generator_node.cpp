@@ -2,6 +2,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <mavros_msgs/CommandBool.h>
+#include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 #include <std_msgs/Int32.h>
@@ -363,25 +364,38 @@ int main(int argc, char **argv)
     }
     
     mavros_msgs::SetMode offb_set_mode;
-    offb_set_mode.request.custom_mode = "OFFBOARD";
+    offb_set_mode.request.custom_mode = "GUIDED";
 
     mavros_msgs::CommandBool arm_cmd;
     arm_cmd.request.value = true;
     ros::Time last_request = ros::Time::now();
     
     if( set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent) {
-        ROS_INFO("Offboard enabled");
+        ROS_INFO("GUIDED enabled");
     }
 
     if( arming_client.call(arm_cmd) && arm_cmd.response.success) {
         ROS_INFO("Vehicle armed");
     }
+
+    ros::ServiceClient takeoff_cl = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/takeoff");
+    mavros_msgs::CommandTOL srv_takeoff;
+    srv_takeoff.request.altitude = 1.2;
+    if(takeoff_cl.call(srv_takeoff))
+    {
+        ROS_INFO("srv_takeoff send success %d", srv_takeoff.response.success);
+    }
+    else
+    {
+        ROS_ERROR("Takeoff failed");
+    }
+
     while (ros::ok()) {
-        if (current_state.mode != "OFFBOARD" &&
+        if (current_state.mode != "GUIDED" &&
                 (ros::Time::now() - last_request > ros::Duration(2.0))) {
             if( set_mode_client.call(offb_set_mode) &&
                     offb_set_mode.response.mode_sent) {
-                ROS_INFO("Offboard enabled");
+                ROS_INFO("GUIDED enabled");
             }
             last_request = ros::Time::now();
         } else {

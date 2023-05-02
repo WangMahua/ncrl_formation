@@ -117,8 +117,8 @@ int main(int argc, char **argv)
     laplacian_remap(laplacian_param, laplacian_map);
 
     float d = 4.0;
-    float leader_uav_vector_x[5] = {0, 0, 0, -1/2*sqrt(3)*d, 1/2*sqrt(3)*d};  //active: mav2, mav4 
-    float leader_uav_vector_y[5] = {0, 0, d,         -1/2*d,        -1/2*d};  //vector y from leader to uav
+    float leader_uav_vector_x[5] = {0, 0, 1/2*sqrt(3)*d, 0, 0};  //active: mav2, mav4 
+    float leader_uav_vector_y[5] = {0, d,        -1/2*d, 0, 0};  //vector y from leader to uav
     float relative_map_x[5][5];
     float relative_map_y[5][5];
     for(int i = 0 ; i<5; i++){

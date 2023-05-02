@@ -200,8 +200,6 @@ int main(int argc, char **argv)
             switch (c) {
                 case 116:    // (t) takeoff
                     start_takeoff();
-                    start_all_drone = 1;
-					ROS_INFO("start all drone");
                     break;
                 case 108:    // (l) land
                     start_land();
@@ -221,6 +219,10 @@ int main(int argc, char **argv)
                 	init_drone.data = init_all_drone;
                 	uav_init_pub.publish(init_drone);
                 	break;
+                case 115:
+                	start_all_drone = 1;
+					ROS_INFO("start all drone");
+					break;
 			}
         }
     /**
