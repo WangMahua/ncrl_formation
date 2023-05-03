@@ -396,6 +396,7 @@ int main(int argc, char **argv)
     else
     {
         ROS_ERROR("Takeoff failed");
+	return 0;
     }
 	
     sleep(10);
