@@ -38,6 +38,7 @@ enum {
 int leader_mode;
 int kill_all_drone = 0;
 int start_all_drone = 0;
+int takeoff_all_drone = 0;
 int init_all_drone = 0;
 
 void start_takeoff(){
@@ -174,6 +175,8 @@ int main(int argc, char **argv)
   ros::Publisher uav_killer_pub = nh.advertise<std_msgs::Int32>("/uav_kill", 10);
   ros::Publisher uav_start_pub = nh.advertise<std_msgs::Int32>("/uav_start", 10);
   ros::Publisher uav_init_pub = nh.advertise<std_msgs::Int32>("/uav_init", 10);
+  ros::Publisher uav_takeoff_pub = nh.advertise<std_msgs::Int32>("/uav_takeoff", 10);
+
 
   ros::Subscriber target_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("/Target/mavros/local_position/pose_initialized", 10, target_pose_cb);
   ros::Subscriber target_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>("/Target/mavros/local_position/velocity_local", 10, target_vel_cb);
@@ -194,12 +197,17 @@ int main(int argc, char **argv)
   {
         //keyboard control
   		init_all_drone = 0;
+  		kill_all_drone = 0;
+  		start_all_drone = 0;
+  		takeoff_all_drone = 0;
         int c = getch();
         //ROS_INFO("C: %d",c);
         if (c != EOF) {
             switch (c) {
                 case 116:    // (t) takeoff
                     start_takeoff();
+                    ROS_INFO("takeoff all drone");
+                    takeoff_all_drone = 1;
                     break;
                 case 108:    // (l) land
                     start_land();
@@ -235,9 +243,12 @@ int main(int argc, char **argv)
 	uav_killer_pub.publish(kill_msg);
 	std_msgs::Int32 start_msg;
 	start_msg.data=start_all_drone;
+	std_msgs::Int32 takeoff_msg;
+	takeoff_msg.data = takeoff_all_drone;
 	uav_start_pub.publish(start_msg);
     leader_pose_pub.publish(leader_pose);
     leader_vel_pub.publish(leader_vel);
+    uav_takeoff_pub.publish(takeoff_msg);
     ros::spinOnce();
 
     loop_rate.sleep();

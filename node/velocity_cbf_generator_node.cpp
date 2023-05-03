@@ -31,6 +31,7 @@ geometry_msgs::PoseStamped desired_pose;
 double desired_yaw = 0;
 int kill_all_drone = 0;
 int start_all_drone = 0;
+int takeoff_all_drone = 0;
 // var for desired_velocity
 geometry_msgs::TwistStamped desired_vel_raw;
 geometry_msgs::TwistStamped desired_vel;        //output
@@ -279,6 +280,12 @@ void start_cb(const std_msgs::Int32 msg){
     //store odometry into global variable
     start_all_drone = msg.data;
 }
+
+void takeoff_cb(const std_msgs::Int32 msg){
+    //store odometry into global variable
+    takeoff_all_drone = msg.data;
+}
+
 void kill_cb(const std_msgs::Int32 msg){
     //store odometry into global variable
     kill_all_drone = msg.data;
@@ -309,6 +316,7 @@ int main(int argc, char **argv)
     
     ros::Subscriber uav_start_sub = nh.subscribe<std_msgs::Int32>("/uav_start", 10, start_cb);
     ros::Subscriber uav_killer_sub = nh.subscribe<std_msgs::Int32>("/uav_kill", 10, kill_cb);
+    ros::Subscriber uav_takeoff_sub = nh.subscribe<std_msgs::Int32>("/uav_takeoff", 10, takeoff_cb);
     // publisher
     ros::Publisher local_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("mavros/setpoint_velocity/cmd_vel", 2);
     // service
@@ -347,14 +355,14 @@ int main(int argc, char **argv)
 
     ROS_INFO("Wait for UAV all start signal");
     while (ros::ok()) {
-        if(start_all_drone == 1){
+        if(takeoff_all_drone == 1){
             break;
         }
         ros::spinOnce();
         rate.sleep();
-        ROS_INFO("Wait for UAV all start signal");
+        ROS_INFO("Wait for UAV all takeoff signal");
     }
-    ROS_INFO("get UAV all start signal");
+    ROS_INFO("get UAV all takeoff signal");
 
     
     //send a few velocity setpoints before starting
@@ -393,23 +401,25 @@ int main(int argc, char **argv)
     sleep(10);
 
     while (ros::ok()) {
+        if(start_all_drone == 1){
+            break;
+        }
+        ros::spinOnce();
+        rate.sleep();
+        ROS_INFO("Wait for UAV all start signal");
+    }
+    ROS_INFO("get UAV all start signal");
+
+    while (ros::ok()) {
         if (current_state.mode != "GUIDED" &&
-                (ros::Time::now() - last_request > ros::Duration(2.0))) {
+                (ros::Time::now() - last_request > ros::Duration(2.0))) 
+        {
             if( set_mode_client.call(offb_set_mode) &&
-                    offb_set_mode.response.mode_sent) {
+                    offb_set_mode.response.mode_sent) 
+            {
                 ROS_INFO("GUIDED enabled");
             }
             last_request = ros::Time::now();
-        } else {
-
-            if (!current_state.armed &&
-                    (ros::Time::now() - last_request > ros::Duration(2.0))) {
-                if( arming_client.call(arm_cmd) &&
-                        arm_cmd.response.success) {
-                    ROS_INFO("Vehicle armed");
-                }
-                last_request = ros::Time::now();
-            }
         }
     
         //keyboard control
