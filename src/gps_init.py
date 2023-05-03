@@ -50,7 +50,7 @@ if __name__ == '__main__':
 	
 	rospy.init_node('gps_init_py')
 	pose_init_sub = rospy.Subscriber('/uav_init', Int32, pose_init_cb)
-	gps_origin_sub = rospy.Subscriber('/Target/mavros/global_position/global', NavSatFix, gps_origin_cb)
+	gps_origin_sub = rospy.Subscriber('/MAV6/mavros/global_position/global', NavSatFix, gps_origin_cb)
 	gps_self_sub = rospy.Subscriber('mavros/global_position/global', NavSatFix, gps_self_cb)
 	gps_pose_sub = rospy.Subscriber('mavros/local_position/pose', PoseStamped, gps_pose_cb)
 
@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
 		gps_pose_initialized.pose.position.x = gps_pose.pose.position.x - gps_pose_init.pose.position.x + pose_relative.pose.position.x
 		gps_pose_initialized.pose.position.y = gps_pose.pose.position.y - gps_pose_init.pose.position.y + pose_relative.pose.position.y
-		gps_pose_initialized.pose.position.z = gps_pose.pose.position.z - gps_pose_init.pose.position.z + pose_relative.pose.position.z
+		gps_pose_initialized.pose.position.z = gps_pose.pose.position.z - gps_pose_init.pose.position.z
 		gps_pose_initialized.pose.orientation = gps_pose.pose.orientation
 
 		gps_pose_pub.publish(gps_pose_initialized)
