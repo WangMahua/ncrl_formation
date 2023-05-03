@@ -389,6 +389,8 @@ int main(int argc, char **argv)
     {
         ROS_ERROR("Takeoff failed");
     }
+	
+    sleep(10);
 
     while (ros::ok()) {
         if (current_state.mode != "GUIDED" &&
