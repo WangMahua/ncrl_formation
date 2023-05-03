@@ -9,7 +9,7 @@
 
 #define LEADER_INIT_X 0.0f
 #define LEADER_INIT_Y 0.0f
-#define TAKEOFF_HEIGHT 1.2f
+#define TAKEOFF_HEIGHT 3.0f
 #define LAND_SPEED 0.8f
 #define CONTROL_HZ 100.0f
 
@@ -125,7 +125,7 @@ void leader_pose_generate(geometry_msgs::PoseStamped *leader_pose)
 	{
 		desired_pose.pose.position.x = 0;
 		desired_pose.pose.position.y = 0;
-		desired_pose.pose.position.z = 1.0;
+		desired_pose.pose.position.z = TAKEOFF_HEIGHT;
 		velocity_ctrl(desired_pose, &leader_vel);
 		float vel_norm = sqrt(pow(leader_vel.twist.linear.x, 2) + pow(leader_vel.twist.linear.y, 2) + pow(leader_vel.twist.linear.z, 2));
 		if(vel_norm < 0.05 && leader_pose->pose.position.z > 0.5)
