@@ -67,7 +67,7 @@ if __name__ == '__main__':
         gps_pose_initialized.pose.position.y = 0
         gps_pose_initialized.pose.position.z = 0
         gps_pose_initialized.header.stamp = rospy.Time()
-        gps_pose_initialized.frame_id = 'map';
+        gps_pose_initialized.header.frame_id = 'map';
 
         rospy.loginfo("wait for stream rate service ...")
         rospy.wait_for_service('mavros/set_stream_rate')
