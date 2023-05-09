@@ -19,6 +19,11 @@ pose_relative = PoseStamped()
 gps_pose = PoseStamped()
 gps_pose_init = PoseStamped()
 gps_pose_initialized = PoseStamped()
+time_leader = rospy.Time()
+
+def time_cb(msg):
+	global time_leader
+	time_leader = msg.header.stamp
 
 def gps_origin_cb(msg): 
 	global latO, lonO, altO
@@ -54,23 +59,33 @@ if __name__ == '__main__':
         gps_origin_sub = rospy.Subscriber('/MAV6/mavros/global_position/global', NavSatFix, gps_origin_cb)
         gps_self_sub = rospy.Subscriber('mavros/global_position/global', NavSatFix, gps_self_cb)
         gps_pose_sub = rospy.Subscriber('mavros/local_position/pose', PoseStamped, gps_pose_cb)
+        leader_pose_sub = rospy.Subscriber('/leader_pose', PoseStamped, time_cb)
 
         gps_pose_pub = rospy.Publisher('mavros/local_position/pose_initialized', PoseStamped, queue_size=10)
         
-        rospy.wait_for_service('mavros/set_stream_rate')
+        gps_pose_initialized.pose.position.x = 0
+        gps_pose_initialized.pose.position.y = 0
+        gps_pose_initialized.pose.position.z = 0
+        gps_pose_initialized.header.stamp = rospy.Time()
+        gps_pose_initialized.frame_id = 'map';
 
+        rospy.loginfo("wait for stream rate service ...")
+        rospy.wait_for_service('mavros/set_stream_rate')
+        rospy.loginfo("set stream rate to 100 Hz")
+        response = stream_rate_client(0, 100, 1)
         stream_rate_client = rospy.ServiceProxy('mavros/set_stream_rate', StreamRate)
+
         rospy.loginfo("gps_init node constructed")
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
-            response = stream_rate_client(0, 30, 1)
             gps_pose_initialized.pose.position.x = gps_pose.pose.position.x - gps_pose_init.pose.position.x + pose_relative.pose.position.x
             gps_pose_initialized.pose.position.y = gps_pose.pose.position.y - gps_pose_init.pose.position.y + pose_relative.pose.position.y
             gps_pose_initialized.pose.position.z = gps_pose.pose.position.z - gps_pose_init.pose.position.z 
             gps_pose_initialized.pose.orientation = gps_pose.pose.orientation
+            gps_pose_initialized.header.stamp = time_leader
+
 
             gps_pose_pub.publish(gps_pose_initialized)
-
 
             rate.sleep()
         rospy.spin()

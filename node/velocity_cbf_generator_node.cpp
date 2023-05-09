@@ -335,7 +335,7 @@ int main(int argc, char **argv)
                          CBF_object(nh, "/MAV1/mavros/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 1),
                          CBF_object(nh, "/MAV2/mavros/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 2),
                          CBF_object(nh, "/MAV3/mavros/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 3),
-                         CBF_object(nh, "/MAV4/mavros/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 4)};
+                         CBF_object(nh, "/MAV6/mavros/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 4)};
 
     ROS_INFO("Wait for pose and desired input init");
     while (ros::ok() && (!desired_input_init || !pose_init)) {

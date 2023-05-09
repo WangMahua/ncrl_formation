@@ -149,9 +149,11 @@ void leader_pose_generate(geometry_msgs::PoseStamped *leader_pose)
 		velocity_ctrl(target_pose, target_vel, &leader_vel);
 	}
 
+	leader_pose->header.stamp = ros::Time::now();
 	leader_pose->pose.position.x = leader_pose->pose.position.x + leader_vel.twist.linear.x*dt;
 	leader_pose->pose.position.y = leader_pose->pose.position.y + leader_vel.twist.linear.y*dt;
 	leader_pose->pose.position.z = leader_pose->pose.position.z + leader_vel.twist.linear.z*dt;
+
 }
 
 void target_pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
@@ -178,8 +180,8 @@ int main(int argc, char **argv)
   ros::Publisher uav_takeoff_pub = nh.advertise<std_msgs::Int32>("/uav_takeoff", 10);
 
 
-  ros::Subscriber target_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("/Target/mavros/local_position/pose_initialized", 10, target_pose_cb);
-  ros::Subscriber target_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>("/Target/mavros/local_position/velocity_local", 10, target_vel_cb);
+  ros::Subscriber target_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("/MAV6/mavros/local_position/pose_initialized", 10, target_pose_cb);
+  ros::Subscriber target_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>("/MAV6/mavros/local_position/velocity_local", 10, target_vel_cb);
 
   ros::Rate loop_rate(CONTROL_HZ);
   
