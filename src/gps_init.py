@@ -72,9 +72,9 @@ if __name__ == '__main__':
         rospy.loginfo("wait for stream rate service ...")
         rospy.wait_for_service('mavros/set_stream_rate')
         rospy.loginfo("set stream rate to 100 Hz")
-        response = stream_rate_client(0, 100, 1)
         stream_rate_client = rospy.ServiceProxy('mavros/set_stream_rate', StreamRate)
-
+	response = stream_rate_client(0, 100, 1)
+	
         rospy.loginfo("gps_init node constructed")
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
