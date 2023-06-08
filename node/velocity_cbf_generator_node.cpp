@@ -426,7 +426,7 @@ int main(int argc, char **argv)
         //keyboard control
         if(kill_all_drone == 1){
             ROS_WARN("velocity_cbf_kill!");
-            offb_set_mode.request.custom_mode = "STABILIZED";
+            offb_set_mode.request.custom_mode = "LAND";
             set_mode_client.call(offb_set_mode);
             arm_cmd.request.value = false;
             arming_client.call(arm_cmd);
