@@ -116,9 +116,9 @@ int main(int argc, char **argv)
     bool laplacian_map[5][5] = {0};
     laplacian_remap(laplacian_param, laplacian_map);
 
-    double d = 4.0;
+    double d = 6.0;
     double leader_uav_vector_x[5] = {0, 0, 1/2*sqrt(3)*d, 0, 0};  //active: mav2, mav4 
-    double leader_uav_vector_y[5] = {0, d,        -1/2*d, 0, 0};  //vector y from leader to uav
+    double leader_uav_vector_y[5] = {0, -d,        -1/2*d, 0, 0};  //vector y from leader to uav
     double relative_map_x[5][5];
     double relative_map_y[5][5];
     for(int i = 0 ; i<5; i++){
