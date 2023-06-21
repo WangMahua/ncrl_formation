@@ -69,11 +69,11 @@ if __name__ == '__main__':
         gps_pose_initialized.header.stamp = rospy.Time()
         gps_pose_initialized.header.frame_id = 'map';
 
-        rospy.loginfo("wait for stream rate service ...")
-        rospy.wait_for_service('mavros/set_stream_rate')
-        rospy.loginfo("set stream rate to 100 Hz")
-        stream_rate_client = rospy.ServiceProxy('mavros/set_stream_rate', StreamRate)
-	response = stream_rate_client(0, 100, 1)
+        #rospy.loginfo("wait for stream rate service ...")
+        #rospy.wait_for_service('mavros/set_stream_rate')
+        #rospy.loginfo("set stream rate to 100 Hz")
+        #stream_rate_client = rospy.ServiceProxy('mavros/set_stream_rate', StreamRate)
+	#response = stream_rate_client(0, 100, 1)
 	
         rospy.loginfo("gps_init node constructed")
         rate = rospy.Rate(100)
