@@ -1,6 +1,6 @@
 <launch>
-    <arg name="fcu_url" default="/dev/ttyUSB0:460800"/>
-    <arg name="gcs_url" default="udp://@192.168.1.86"/>
+    <arg name="fcu_url" default="/dev/ttyUSB0:230400"/>
+    <arg name="gcs_url" default="udp://@192.168.68.105"/>
     <arg name="SYS_ID" default="1"/>
 
     <group ns="MAV$(arg SYS_ID)">
