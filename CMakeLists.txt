@@ -244,13 +244,6 @@ target_link_libraries(formation
 target_include_directories(formation PRIVATE
 	include/${PROJECT_NAME}/ )
 
-# servo
-add_executable(servo src/servo_trig.cpp)
-target_link_libraries(servo
-	${catkin_LIBRARIES} )
-target_include_directories(servo PRIVATE
-	include/${PROJECT_NAME}/ )
-
 
 #############
 ## Install ##
