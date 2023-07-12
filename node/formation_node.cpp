@@ -14,6 +14,8 @@
 #include <tf/tf.h>
 #include <geometry_msgs/Point.h>
 #include <queue>
+#include <std_msgs/Int32.h>
+
 
 #define gravity 9.806
 using namespace std;
@@ -27,6 +29,8 @@ double KPyaw = 1;
 double roll = 0, pitch = 0, yaw = 0;
 geometry_msgs::TwistStamped leader_vel;
 
+int start_all_drone = 0;
+
 class MAV
 {
 private:
@@ -34,11 +38,15 @@ private:
     ros::Subscriber pose_sub;
     queue<geometry_msgs::PoseStamped> pose_queue;
     int id;
+    double roll;
+    double pitch;
+    double yaw;
 
 public:
     MAV(ros::NodeHandle nh, string subTopic, int ID);
     void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
     geometry_msgs::PoseStamped getPose();
+    double getYaw();
     static int UAV_ID;
     static int delay_step;    
 };
@@ -65,13 +73,26 @@ void MAV::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
     }
     else
 	   MAV_pose = *msg;
+
+    tf::Quaternion Q(
+        MAV_pose.pose.orientation.x,
+        MAV_pose.pose.orientation.y,
+        MAV_pose.pose.orientation.z,
+        MAV_pose.pose.orientation.w);
+    tf::Matrix3x3(Q).getRPY(roll,pitch,yaw);
 }
 
 geometry_msgs::PoseStamped MAV::getPose(){return MAV_pose;}
+double MAV::getYaw(){return yaw;}
 
 void leader_vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg)
 {
     leader_vel = *msg;
+}
+
+void start_cb(const std_msgs::Int32 msg)
+{
+    start_all_drone = msg.data;
 }
 
 void laplacian_remap(XmlRpc::XmlRpcValue laplacian_param, bool laplacian_map[][5])
@@ -89,6 +110,35 @@ void laplacian_remap(XmlRpc::XmlRpcValue laplacian_param, bool laplacian_map[][5
     }
 }
 
+geometry_msgs::TwistStamped vel_limit(geometry_msgs::TwistStamped desired_vel, float limit)
+{
+    float vel_norm = sqrt(pow(desired_vel.twist.linear.x, 2) + pow(desired_vel.twist.linear.y, 2) + pow(desired_vel.twist.linear.z, 2));
+    if(vel_norm > limit)
+    {
+        desired_vel.twist.linear.x *= limit/vel_norm;
+        desired_vel.twist.linear.y *= limit/vel_norm;
+        desired_vel.twist.linear.z *= limit/vel_norm;
+    }
+
+    return desired_vel;
+}
+
+void bound_yaw(double* yaw)
+{
+    if(*yaw>M_PI)
+        *yaw = *yaw - 2*M_PI;
+    else if(*yaw<-M_PI)
+        *yaw = *yaw + 2*M_PI;
+}
+
+void follow_yaw(geometry_msgs::TwistStamped& desired_vel, double current_yaw, double desired_yaw)
+{
+    double err_yaw, u_yaw;
+    err_yaw = desired_yaw - current_yaw;
+    bound_yaw( &err_yaw );
+    u_yaw = err_yaw;
+    desired_vel.twist.angular.z = u_yaw;
+}
 
 int main(int argc, char **argv)
 {
@@ -105,7 +155,7 @@ int main(int argc, char **argv)
                   MAV(nh, "/MAV3/mavros/local_position/pose_initialized", 3),
                   MAV(nh, "/MAV4/mavros/local_position/pose_initialized", 4)};
     ros::Subscriber leader_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>("/leader_vel", 10, leader_vel_cb);
-
+    ros::Subscriber uav_start_sub = nh.subscribe<std_msgs::Int32>("/uav_start", 10, start_cb);
     //Publisher    
     ros::Publisher desired_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("desired_velocity_raw", 100);
 
@@ -167,16 +217,14 @@ int main(int argc, char **argv)
         desired_vel.twist.linear.x += leader_vel.twist.linear.x;
         desired_vel.twist.linear.y += leader_vel.twist.linear.y;
         desired_vel.twist.linear.z += leader_vel.twist.linear.z;
-	
-	float vel_lim = 2;
-        float vel_norm = sqrt(pow(desired_vel.twist.linear.x, 2) + pow(desired_vel.twist.linear.y, 2) + pow(desired_vel.twist.linear.z, 2));
-        if(vel_norm > vel_lim)
+
+        if(start_all_drone)
         {
-            desired_vel.twist.linear.x *= vel_lim/vel_norm;
-            desired_vel.twist.linear.y *= vel_lim/vel_norm;
-            desired_vel.twist.linear.z *= vel_lim/vel_norm;
+            double desired_yaw = atan2(mav[0].getPose().pose.position.y - mav[MAV::UAV_ID].getPose().pose.position.y, mav[0].getPose().pose.position.x - mav[MAV::UAV_ID].getPose().pose.position.x);
+            follow_yaw(desired_vel, mav[MAV::UAV_ID].getYaw(), desired_yaw);
         }
 
+        desired_vel = vel_limit(desired_vel, 4);
         desired_vel_pub.publish(desired_vel);
 
         ros::spinOnce();
@@ -185,6 +233,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-
-

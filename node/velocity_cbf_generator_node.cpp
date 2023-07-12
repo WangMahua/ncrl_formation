@@ -200,15 +200,6 @@ void follow(geometry_msgs::PoseStamped desired_pose,double desired_yaw, geometry
     desired_vel->twist.angular.z = uyaw;
 }
 
-void follow_yaw(geometry_msgs::TwistStamped& desired_vel, double desired_yaw)
-{
-	double err_yaw, u_yaw;
-	err_yaw = desired_yaw - yaw;
-	bound_yaw( &err_yaw );
-	u_yaw = KPyaw*err_yaw;
-	desired_vel.twist.angular.z = u_yaw;
-}
-
 int velocity_cbf(geometry_msgs::TwistStamped desired_vel_raw,geometry_msgs::TwistStamped* desired_vel, CBF_object cbO[]){
 
             Eigen::SparseMatrix<double> hessian_Matrix;
@@ -450,7 +441,6 @@ int main(int argc, char **argv)
             desired_vel = desired_vel_raw;
         }
         
-        follow_yaw(desired_vel, M_PI/2);
         local_vel_pub.publish(desired_vel);
 
         ros::spinOnce();
