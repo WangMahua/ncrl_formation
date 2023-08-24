@@ -5,14 +5,14 @@
 
     <group ns="MAV$(arg SYS_ID)">
     	<param name="UAV_ID" value="$(arg SYS_ID)"/>
-    	<param name="obs_safe_D" value="2"/>
+    	<param name="obs_safe_D" value="4"/>
     	<param name="obs_gamma" value="0.8"/>
-        <param name="MAV_safe_D" value="2"/>
+        <param name="MAV_safe_D" value="4"/>
         <param name="MAV_gamma" value="0.8"/>
         <param name="delay_step" value="0"/>
     	<rosparam param="laplacian">
                             [1,0,0,0,0,
-                             1,1,1,0,0,
+                             1,1,0,0,0,
                              1,1,1,0,0,
                              1,0,1,0,1,
                              1,0,1,0,1]
@@ -23,7 +23,8 @@
             <arg name="tgt_system" value="$(arg SYS_ID)"/>
         </include> 
         <node name="gps_init_py" pkg="flight_control" type="gps_init.py" output="screen"></node>
-        <node name="formation" pkg="flight_control" type="formation"></node>
+        <node name="servo_GPIO_py" pkg="flight_control" type="servo_GPIO.py" output="screen"></node>
+        <node name="formation" pkg="flight_control" type="formation" output="screen"></node>
         <node name="velocity_cbf_generator" pkg="flight_control" type="velocity_cbf_generator" output="screen">
             <rosparam subst_value="true">
                 use_input: "velocity"  #velocity,position

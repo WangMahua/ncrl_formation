@@ -106,7 +106,6 @@ float CBF_object::getSafeDistance(){return safeDistance;}
 
 float CBF_object::getGamma(){return gamma;}
 
-
 void bound_yaw(double* yaw){
         if(*yaw>M_PI)
             *yaw = *yaw - 2*M_PI;
@@ -114,6 +113,14 @@ void bound_yaw(double* yaw){
             *yaw = *yaw + 2*M_PI;
 }
 
+void follow_yaw(geometry_msgs::TwistStamped& desired_vel, double current_yaw, double desired_yaw)
+{
+    double err_yaw, u_yaw;
+    err_yaw = desired_yaw - current_yaw;
+    bound_yaw( &err_yaw );
+    u_yaw = 1.5*err_yaw;
+    desired_vel.twist.angular.z = u_yaw;
+}
 void state_cb(const mavros_msgs::State::ConstPtr& msg) {
     current_state = *msg;
 }
@@ -440,6 +447,9 @@ int main(int argc, char **argv)
         else{
             desired_vel = desired_vel_raw;
         }
+	
+	desired_yaw = atan2(cbO[0].getPose().pose.position.y-host_mocap.pose.position.y, cbO[0].getPose().pose.position.x-host_mocap.pose.position.x);
+	follow_yaw(desired_vel, yaw, desired_yaw);
         
         local_vel_pub.publish(desired_vel);
 

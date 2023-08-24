@@ -136,8 +136,9 @@ void follow_yaw(geometry_msgs::TwistStamped& desired_vel, double current_yaw, do
     double err_yaw, u_yaw;
     err_yaw = desired_yaw - current_yaw;
     bound_yaw( &err_yaw );
-    u_yaw = err_yaw;
+    u_yaw = 0.5*err_yaw;
     desired_vel.twist.angular.z = u_yaw;
+
 }
 
 int main(int argc, char **argv)
@@ -166,8 +167,8 @@ int main(int argc, char **argv)
     bool laplacian_map[5][5] = {0};
     laplacian_remap(laplacian_param, laplacian_map);
 
-    double d = 8.0;
-    double leader_uav_vector_x[5] = {0, d, 1/2*sqrt(3)*d, 0, 0};  //active: mav2, mav4 
+    double d = 2.5;
+    double leader_uav_vector_x[5] = {0, -d, 1/2*sqrt(3)*d, 0, 0};  //active: mav2, mav4 
     double leader_uav_vector_y[5] = {0, 0,        -1/2*d, 0, 0};  //vector y from leader to uav
     double relative_map_x[5][5];
     double relative_map_y[5][5];
@@ -217,12 +218,6 @@ int main(int argc, char **argv)
         desired_vel.twist.linear.x += leader_vel.twist.linear.x;
         desired_vel.twist.linear.y += leader_vel.twist.linear.y;
         desired_vel.twist.linear.z += leader_vel.twist.linear.z;
-
-        if(start_all_drone)
-        {
-            double desired_yaw = atan2(mav[0].getPose().pose.position.y - mav[MAV::UAV_ID].getPose().pose.position.y, mav[0].getPose().pose.position.x - mav[MAV::UAV_ID].getPose().pose.position.x);
-            follow_yaw(desired_vel, mav[MAV::UAV_ID].getYaw(), desired_yaw);
-        }
 
         desired_vel = vel_limit(desired_vel, 4);
         desired_vel_pub.publish(desired_vel);
