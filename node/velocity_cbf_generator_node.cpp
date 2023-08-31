@@ -386,7 +386,7 @@ int main(int argc, char **argv)
 
     ros::ServiceClient takeoff_cl = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/takeoff");
     mavros_msgs::CommandTOL srv_takeoff;
-    srv_takeoff.request.altitude = 3;
+    srv_takeoff.request.altitude = 8;
     if(takeoff_cl.call(srv_takeoff))
     {
         ROS_INFO("srv_takeoff send success %d", srv_takeoff.response.success);
@@ -424,7 +424,7 @@ int main(int argc, char **argv)
         //keyboard control
         if(kill_all_drone == 1){
             ROS_WARN("velocity_cbf_kill!");
-            offb_set_mode.request.custom_mode = "LAND";
+            offb_set_mode.request.custom_mode = "LOITER";
             set_mode_client.call(offb_set_mode);
         }
         //ROS_INFO("setpoint: %.2f, %.2f, %.2f, %.2f", desired_pose.pose.position.x, desired_pose.pose.position.y, desired_pose.pose.position.z, desired_yaw/M_PI*180);

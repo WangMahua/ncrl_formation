@@ -42,6 +42,7 @@ private:
     double pitch;
     double yaw;
 
+
 public:
     MAV(ros::NodeHandle nh, string subTopic, int ID);
     void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
@@ -49,6 +50,7 @@ public:
     double getYaw();
     static int UAV_ID;
     static int delay_step;    
+    bool gotPose;
 };
 
 int MAV::UAV_ID = 0;
@@ -58,13 +60,17 @@ MAV::MAV(ros::NodeHandle nh, string subTopic, int ID)
 {
     pose_sub = nh.subscribe<geometry_msgs::PoseStamped>(subTopic, 10, &MAV::pose_cb, this);
     id = ID;
+    gotPose = false;
 }
 
 void MAV::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
+	if(!gotPose)
+		gotPose = true;
+
     if(id != UAV_ID)
     {
-	   pose_queue.push(*msg);
+	pose_queue.push(*msg);
 	if(pose_queue.size() >= delay_step)
 	{
 	    MAV_pose = pose_queue.front();
@@ -167,8 +173,8 @@ int main(int argc, char **argv)
     bool laplacian_map[5][5] = {0};
     laplacian_remap(laplacian_param, laplacian_map);
 
-    double d = 2.5;
-    double leader_uav_vector_x[5] = {0, -d, 1/2*sqrt(3)*d, 0, 0};  //active: mav2, mav4 
+    double d = 4;
+    double leader_uav_vector_x[5] = {0, d, 1/2*sqrt(3)*d, 0, 0};  //active: mav2, mav4 
     double leader_uav_vector_y[5] = {0, 0,        -1/2*d, 0, 0};  //vector y from leader to uav
     double relative_map_x[5][5];
     double relative_map_y[5][5];
@@ -197,22 +203,51 @@ int main(int argc, char **argv)
 
     geometry_msgs::TwistStamped desired_vel;
 
+	int n = 0;
+	float leaderGain = 1;
+	float followerGain = 1;
+	float gain = 1;
+
+	for(int i = 1; i < 5; i++)
+	{
+		if(mav[i].gotPose && i != MAV::UAV_ID)
+			n++;	
+	}
+
     while (ros::ok()) {
         desired_vel.twist.linear.x = 0;
         desired_vel.twist.linear.y = 0;
         desired_vel.twist.linear.z = 0;
+
+	leaderGain = 1.0;
+	if(n > 0)
+	{
+		leaderGain = 0.7;
+		followerGain = (1-leaderGain)/n;
+	}
+
         for(int i =0 ;i<5;i++)
         {
             if(laplacian_map[MAV::UAV_ID][i] == 1)
             {
-                desired_vel.twist.linear.x += mav[i].getPose().pose.position.x
+		    double effect_x = mav[i].getPose().pose.position.x
                                             - mav[MAV::UAV_ID].getPose().pose.position.x
                                             + relative_map_x[MAV::UAV_ID][i];
-                desired_vel.twist.linear.y += mav[i].getPose().pose.position.y
+		    double effect_y = mav[i].getPose().pose.position.y
                                             - mav[MAV::UAV_ID].getPose().pose.position.y
                                             + relative_map_y[MAV::UAV_ID][i];
-                desired_vel.twist.linear.z += mav[i].getPose().pose.position.z
+		    double effect_z = mav[i].getPose().pose.position.z
                                             - mav[MAV::UAV_ID].getPose().pose.position.z;
+		    
+		    if(i==0)
+			    gain = leaderGain;
+		    else if(i>=1)
+			    gain = followerGain;
+
+		    desired_vel.twist.linear.x += gain*effect_x;              
+		    desired_vel.twist.linear.y += gain*effect_y;
+		    desired_vel.twist.linear.z += gain*effect_z;
+
             }
         }
         desired_vel.twist.linear.x += leader_vel.twist.linear.x;
