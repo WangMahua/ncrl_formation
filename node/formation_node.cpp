@@ -174,8 +174,8 @@ int main(int argc, char **argv)
     laplacian_remap(laplacian_param, laplacian_map);
 
     double d = 4;
-    double leader_uav_vector_x[5] = {0, d, 1/2*sqrt(3)*d, 0, 0};  //active: mav2, mav4 
-    double leader_uav_vector_y[5] = {0, 0,        -1/2*d, 0, 0};  //vector y from leader to uav
+    double leader_uav_vector_x[5] = {0, 0, d, 0, 0};  //active: mav2, mav4 
+    double leader_uav_vector_y[5] = {0, -d, 0, 0, 0};  //vector y from leader to uav
     double relative_map_x[5][5];
     double relative_map_y[5][5];
     for(int i = 0 ; i<5; i++){
@@ -219,12 +219,14 @@ int main(int argc, char **argv)
         desired_vel.twist.linear.y = 0;
         desired_vel.twist.linear.z = 0;
 
+	/*
 	leaderGain = 1.0;
 	if(n > 0)
 	{
 		leaderGain = 0.7;
 		followerGain = (1-leaderGain)/n;
 	}
+	*/
 
         for(int i =0 ;i<5;i++)
         {
@@ -240,9 +242,9 @@ int main(int argc, char **argv)
                                             - mav[MAV::UAV_ID].getPose().pose.position.z;
 		    
 		    if(i==0)
-			    gain = leaderGain;
+			    gain = 0.7;
 		    else if(i>=1)
-			    gain = followerGain;
+			    gain = 0.3;
 
 		    desired_vel.twist.linear.x += gain*effect_x;              
 		    desired_vel.twist.linear.y += gain*effect_y;

@@ -1,18 +1,18 @@
 <launch>
     <arg name="fcu_url" default="/dev/ttyUSB0:230400"/>
     <arg name="gcs_url" default="udp://@192.168.86.33"/>
-    <arg name="SYS_ID" default="1"/>
+    <arg name="SYS_ID" default="2"/>
 
     <group ns="MAV$(arg SYS_ID)">
     	<param name="UAV_ID" value="$(arg SYS_ID)"/>
-    	<param name="obs_safe_D" value="4"/>
-    	<param name="obs_gamma" value="0.8"/>
-        <param name="MAV_safe_D" value="4"/>
-        <param name="MAV_gamma" value="0.8"/>
+    	<param name="obs_safe_D" value="3.0"/>
+    	<param name="obs_gamma" value="1.5"/>
+        <param name="MAV_safe_D" value="3.0"/>
+        <param name="MAV_gamma" value="1.5"/>
         <param name="delay_step" value="0"/>
     	<rosparam param="laplacian">
                             [1,0,0,0,0,
-                             1,1,0,0,0,
+                             1,1,1,0,0,
                              1,1,1,0,0,
                              1,0,1,0,1,
                              1,0,1,0,1]

@@ -80,7 +80,7 @@ if __name__ == '__main__':
         while not rospy.is_shutdown():
             gps_pose_initialized.pose.position.x = gps_pose.pose.position.x - gps_pose_init.pose.position.x + pose_relative.pose.position.x
             gps_pose_initialized.pose.position.y = gps_pose.pose.position.y - gps_pose_init.pose.position.y + pose_relative.pose.position.y
-            gps_pose_initialized.pose.position.z = gps_pose.pose.position.z - gps_pose_init.pose.position.z + pose_relative.pose.position.z
+            gps_pose_initialized.pose.position.z = gps_pose.pose.position.z - gps_pose_init.pose.position.z 
             gps_pose_initialized.pose.orientation = gps_pose.pose.orientation
             gps_pose_initialized.header.stamp = time_leader
 
