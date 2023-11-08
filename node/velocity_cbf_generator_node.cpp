@@ -2,6 +2,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <mavros_msgs/CommandBool.h>
+#include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 #include <std_msgs/Int32.h>
@@ -12,6 +13,8 @@
 #include "OsqpEigen/OsqpEigen.h"
 #include <Eigen/Dense>
 #include <queue>
+#include "origin_publisher.h"
+
 #define gravity 9.806
 
 using namespace std;
@@ -30,6 +33,7 @@ geometry_msgs::PoseStamped desired_pose;
 double desired_yaw = 0;
 int kill_all_drone = 0;
 int start_all_drone = 0;
+int takeoff_all_drone = 0;
 // var for desired_velocity
 geometry_msgs::TwistStamped desired_vel_raw;
 geometry_msgs::TwistStamped desired_vel;        //output
@@ -282,13 +286,19 @@ void kill_cb(const std_msgs::Int32 msg){
     //store odometry into global variable
     kill_all_drone = msg.data;
 }
+void takeoff_cb(const std_msgs::Int32 msg){
+    //store odometry into global variable
+    takeoff_all_drone = msg.data;
+}
+
 int main(int argc, char **argv)
 {
     //  ROS_initialize  //
     ros::init(argc, argv, "velocity_cbf");
     ros::NodeHandle nh,private_nh("~");
-    
-    ros::param::get("UAV_ID", CBF_object::self_id);
+
+    int UAV_ID;
+    ros::param::get("UAV_ID", UAV_ID);
     ros::param::get("delay_step", CBF_object::delay_step);
 
     string use_input_s;
@@ -298,19 +308,20 @@ int main(int argc, char **argv)
        use_input_s = "position";
     }   
     std::cout<< use_input_s << "\n";
-    string MAV_self_topic;
-    ros::param::get("sub_topic", MAV_self_topic);
     //    subscriber    //
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 100, state_cb);
-    ros::Subscriber host_sub = nh.subscribe<geometry_msgs::PoseStamped>(MAV_self_topic, 10, host_pose_cb);
+    ros::Subscriber host_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, host_pose_cb);
     
     ros::Subscriber desired_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("desired_pose", 10, desired_pose_cb);
     ros::Subscriber desired_velocity_sub = nh.subscribe<geometry_msgs::TwistStamped>("desired_velocity_raw", 10, desired_vel_cb);
     
     ros::Subscriber uav_start_sub = nh.subscribe<std_msgs::Int32>("/uav_start", 10, start_cb);
     ros::Subscriber uav_killer_sub = nh.subscribe<std_msgs::Int32>("/uav_kill", 10, kill_cb);
+    ros::Subscriber uav_takeoff_sub = nh.subscribe<std_msgs::Int32>("/uav_takeoff", 10, takeoff_cb);
+
     // publisher
     ros::Publisher local_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("mavros/setpoint_velocity/cmd_vel", 2);
+    ros::Publisher mavlink_pub = nh.advertise<mavros_msgs::Mavlink>("mavlink/to", 20);
     // service
     ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
@@ -322,12 +333,14 @@ int main(int argc, char **argv)
     ros::param::get("MAV_gamma", MAV_Gamma);
     ros::param::get("MAV_safe_D", MAV_SafeDistance);
 
-
+    CBF_object::self_id = UAV_ID;
     CBF_object cbO[5] = {CBF_object(nh, "/vrpn_client_node/obstacle/pose",obstacle_SafeDistance, obstacle_Gamma, 0),
-                         CBF_object(nh, "/vrpn_client_node/MAV1/pose", MAV_SafeDistance, MAV_Gamma, 1),
-                         CBF_object(nh, "/vrpn_client_node/MAV2/pose", MAV_SafeDistance, MAV_Gamma, 2),
-                         CBF_object(nh, "/vrpn_client_node/MAV3/pose", MAV_SafeDistance, MAV_Gamma, 3),
-                         CBF_object(nh, "/vrpn_client_node/MAV4/pose", MAV_SafeDistance, MAV_Gamma, 4)};
+                         CBF_object(nh, "/MAV1/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 1),
+                         CBF_object(nh, "/MAV2/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 2),
+                         CBF_object(nh, "/MAV3/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 3),
+                         CBF_object(nh, "/MAV4/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 4)};
+
+    OriginPublisher origin_publisher(nh, UAV_ID);
 
     ROS_INFO("Wait for pose and desired input init");
     while (ros::ok() && (!desired_input_init || !pose_init)) {
@@ -345,16 +358,20 @@ int main(int argc, char **argv)
     }
     ROS_INFO("FCU connected");
 
-    ROS_INFO("Wait for UAV all start signal");
+    ROS_INFO("Setting initial position...");
+    origin_publisher.run();
+
+
+    ROS_INFO("Wait for UAV all takeoff signal");
     while (ros::ok()) {
-        if(start_all_drone == 1){
+        if(takeoff_all_drone == 1){
             break;
         }
         ros::spinOnce();
         rate.sleep();
-        ROS_INFO("Wait for UAV all start signal");
+        ROS_INFO("Wait for UAV all takeoff signal");
     }
-    ROS_INFO("get UAV all start signal");
+    ROS_INFO("get UAV all takeoff signal");
 
     
     //send a few velocity setpoints before starting
@@ -364,21 +381,37 @@ int main(int argc, char **argv)
     }
     
     mavros_msgs::SetMode offb_set_mode;
-    offb_set_mode.request.custom_mode = "OFFBOARD";
+    offb_set_mode.request.custom_mode = "GUIDED";
 
     mavros_msgs::CommandBool arm_cmd;
     arm_cmd.request.value = true;
     ros::Time last_request = ros::Time::now();
     
     if( set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent) {
-        ROS_INFO("Offboard enabled");
+        ROS_INFO("GUIDED enabled");
     }
 
     if( arming_client.call(arm_cmd) && arm_cmd.response.success) {
         ROS_INFO("Vehicle armed");
     }
+
+    ros::ServiceClient takeoff_cl = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/takeoff");
+    mavros_msgs::CommandTOL srv_takeoff;
+    srv_takeoff.request.altitude = 1.0;
+    if(takeoff_cl.call(srv_takeoff))
+    {
+        ROS_INFO("srv_takeoff send success %d", srv_takeoff.response.success);
+    }
+    else
+    {
+        ROS_ERROR("Takeoff failed");
+	return 0;
+    }
+	
+    sleep(10);
+
     while (ros::ok()) {
-        if (current_state.mode != "OFFBOARD" &&
+        if (current_state.mode != "GUIDED" &&
                 (ros::Time::now() - last_request > ros::Duration(2.0))) {
             if( set_mode_client.call(offb_set_mode) &&
                     offb_set_mode.response.mode_sent) {

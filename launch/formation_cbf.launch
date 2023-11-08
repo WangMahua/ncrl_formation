@@ -1,27 +1,34 @@
 <launch>
-    <group ns="MAV2">
-	<param name="UAV_ID" value="2"/>
-	<param name="obs_safe_D" value="0.6"/>
-	<param name="obs_gamma" value="0.8"/>
-    	<param name="MAV_safe_D" value="0.6"/>
-    	<param name="MAV_gamma" value="0.8"/>
-    	<param name="delay_step" value="0"/>
-	<rosparam param="laplacian">
-                        [1,0,0,0,0,
-                         1,1,0,0,0,
-                         1,0,1,0,0,
-                         1,1,0,1,0,
-                         1,1,0,0,1]</rosparam>
-	<param name="sub_topic" value="/vrpn_client_node/MAV2/pose"/>
+    <arg name="fcu_url" default="/dev/ttyUSB0:230400"/>
+    <arg name="gcs_url" default="udp://@192.168.86.33"/>
+    <arg name="SYS_ID" default="1"/>
 
-        <include file="$(find mavros)/launch/px4.launch">
-        </include>
-        <node name="topic_tool" pkg="flight_control" type="topic_tool"></node>
-        <node name="formation" pkg="flight_control" type="formation"></node>
-        <node name="velocity_cbf_generator" pkg="flight_control" type="velocity_cbf_generator" output="screen">
-            <rosparam subst_value="true">
-                use_input: "velocity"  #velocity,position
-           </rosparam>
-       </node>
+    <group ns="MAV$(arg SYS_ID)">
+        <param name="UAV_ID" value="$(arg SYS_ID)"/>
+        <param name="obs_safe_D" value="0.6"/>
+        <param name="obs_gamma" value="0.8"/>
+        <param name="MAV_safe_D" value="0.6"/>
+        <param name="MAV_gamma" value="0.8"/>
+        <param name="delay_step" value="0"/>
+        <rosparam param="laplacian">
+                            [1,0,0,0,0,
+                             1,1,0,0,0,
+                             1,1,1,0,0,
+                             1,1,1,1,0,
+                             1,1,1,1,1]</rosparam>
+        <param name="sub_topic" value=>
+
+            <include file="$(find mavros)/launch/apm.launch">
+                <arg name="fcu_url" value="$(arg fcu_url)"/>
+                <arg name="gcs_url" value="$(arg gcs_url)"/>
+                <arg name="tgt_system" value="$(arg SYS_ID)"/>
+            </include> 
+            <node name="topic_tool" pkg="flight_control" type="topic_tool"></node>
+            <node name="formation" pkg="flight_control" type="formation"></node>
+            <node name="velocity_cbf_generator" pkg="flight_control" type="velocity_cbf_generator" output="screen">
+                <rosparam subst_value="true">
+                    use_input: "velocity"  #velocity,position
+            </rosparam>
+        </node>
     </group>
 </launch>

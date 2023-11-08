@@ -97,10 +97,10 @@ int main(int argc, char **argv)
 
     //Subscriber
     MAV mav[5] = {MAV(nh, "/leader_pose", 0),
-                  MAV(nh, "/vrpn_client_node/MAV1/pose", 1),
-                  MAV(nh, "/vrpn_client_node/MAV2/pose", 2),
-                  MAV(nh, "/vrpn_client_node/MAV3/pose", 3),
-                  MAV(nh, "/vrpn_client_node/MAV4/pose", 4)};
+                  MAV(nh, "/MAV1/mavros/local_position/pose", 1),
+                  MAV(nh, "/MAV2/mavros/local_position/pose", 2),
+                  MAV(nh, "/MAV3/mavros/local_position/pose", 3),
+                  MAV(nh, "/MAV4/mavros/local_position/pose", 4)};
 
     //Publisher    
     ros::Publisher desired_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("desired_velocity_raw", 100);
@@ -111,10 +111,10 @@ int main(int argc, char **argv)
     laplacian_remap(laplacian_param, laplacian_map);
 
 
-    //float leader_uav_vector_x[5] = {0,0.5,-0.5,-0.5,0.5 };  //vector x from leader to uav
-    //float leader_uav_vector_y[5] = {0,0.5,0.5 ,-0.5,-0.5};  //vector y from leader to uav
-    float leader_uav_vector_x[5] = {0, 0, -0.5, 0, 0.5 };  //vector x from leader to uav
-    float leader_uav_vector_y[5] = {0, 0, -0.5 , -0.5*sqrt(2),-0.5};  //vector y from leader to uav
+    float leader_uav_vector_x[5] = {0,0.5,-0.5,-0.5,0.5 };  //vector x from leader to uav
+    float leader_uav_vector_y[5] = {0,0.5,0.5 ,-0.5,-0.5};  //vector y from leader to uav
+    //float leader_uav_vector_x[5] = {0, 0, -0.5, 0, 0.5 };  //vector x from leader to uav
+    //float leader_uav_vector_y[5] = {0, 0, -0.5 , -0.5*sqrt(2),-0.5};  //vector y from leader to uav
     float relative_map_x[5][5];
     float relative_map_y[5][5];
     for(int i = 0 ; i<5; i++){

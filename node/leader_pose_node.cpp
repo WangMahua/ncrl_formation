@@ -37,6 +37,7 @@ enum {
 int leader_mode;
 int kill_all_drone = 0;
 int start_all_drone = 0;
+int takeoff_all_drone = 0;
 
 void start_takeoff(){
 	if(leader_mode == TAKEOFF || leader_pose.pose.position.z>0.1 ){
@@ -210,6 +211,7 @@ int main(int argc, char **argv)
   ros::Publisher leader_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("/leader_pose", 10);
   ros::Publisher uav_killer_pub = nh.advertise<std_msgs::Int32>("/uav_kill", 10);
   ros::Publisher uav_start_pub = nh.advertise<std_msgs::Int32>("/uav_start", 10);
+  ros::Publisher uav_takeoff_pub = nh.advertise<std_msgs::Int32>("/uav_takeoff", 10);
   ros::Subscriber point_sub = nh.subscribe<geometry_msgs::Point>("/waypoint", 10, waypoint_cb);
 
   ros::Rate loop_rate(100);
@@ -234,6 +236,8 @@ int main(int argc, char **argv)
             switch (c) {
                 case 116:    // (t) takeoff
                     start_takeoff();
+					ROS_INFO("Takeoff all drone");
+                    takeoff_all_drone = 1;
                     break;
                 case 108:    // (l) land
                     start_land();
@@ -279,8 +283,11 @@ int main(int argc, char **argv)
 	uav_killer_pub.publish(kill_msg);
 	std_msgs::Int32 start_msg;
 	start_msg.data=start_all_drone;
+	std_msgs::Int32 takeoff_msg;
+	takeoff_msg.data = takeoff_all_drone;
 	uav_start_pub.publish(start_msg);
     leader_pose_pub.publish(leader_pose);
+	uav_takeoff_pub.publish(takeoff_msg);
     ros::spinOnce();
 
     loop_rate.sleep();

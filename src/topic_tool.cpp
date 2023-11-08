@@ -11,12 +11,9 @@
 #include <fcntl.h>
 #include <tf/tf.h>
 #include <string>
-//#define SLAM
-#define Mocap
 
 geometry_msgs::PoseStamped host_mocap;
 
-#ifdef Mocap
 void host_pos(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
     double roll, pitch, yaw;
@@ -28,39 +25,20 @@ void host_pos(const geometry_msgs::PoseStamped::ConstPtr& msg)
             msg->pose.orientation.w);
     tf::Matrix3x3(Q).getRPY(roll,pitch,yaw);
 }
-#else
-void host_pos(const nav_msgs::Odometry::ConstPtr& msg)
-{
-    double roll, pitch, yaw;
-    host_mocap.header = msg->header;
-    host_mocap.pose.position = msg->pose.pose.position;
-    host_mocap.pose.orientation = msg->pose.pose.orientation;
-
-    tf::Quaternion Q(
-        host_mocap.pose.orientation.x,
-        host_mocap.pose.orientation.y,
-        host_mocap.pose.orientation.z,
-        host_mocap.pose.orientation.w);
-    tf::Matrix3x3(Q).getRPY(roll,pitch,yaw);
-}
-#endif
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "topic");
     ros::NodeHandle nh;
 
+    int UAV_ID;
+    ros::param::get("UAV_ID", UAV_ID);
+    std::string sub_topic = std::string("/vrpn_client_node/MAV") + std::to_string(UAV_ID) + std::string("/pose");
+
     ros::Publisher mocap_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/vision_pose/pose", 2);
-#ifdef Mocap
-    std::string sub_topic;
-    ros::param::get("sub_topic", sub_topic);
     ros::Subscriber host_sub = nh.subscribe<geometry_msgs::PoseStamped>(sub_topic, 10, host_pos);
-#else
-//    ros::Subscriber host_sub = nh.subscribe<nav_msgs::Odometry> ("/vins_estimator/odometry",2, host_pos);
-    ros::Subscriber host_sub = nh.subscribe<nav_msgs::Odometry> ("/estimator/imu_propagate", 2, host_pos);
-#endif
     //recommend less than 50HZ
-    ros::Rate rate(30);
+    ros::Rate rate(100);
 
     while (ros::ok()) {
 

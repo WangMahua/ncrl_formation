@@ -141,6 +141,14 @@ add_library(qp
 target_link_libraries(
     qp  ${PYTHON_LIBRARIES}
 )
+add_library(origin_publisher
+  src/origin_publisher.cpp
+
+)
+target_include_directories(origin_publisher PRIVATE
+  include/flight_control/
+)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -162,9 +170,6 @@ target_link_libraries(sync
 	${catkin_LIBRARIES} 
 )
 
-add_executable(follow_test2 src/follow_test2.cpp)
-target_link_libraries(follow_test2 ${catkin_LIBRARIES})
-
 add_executable(vio src/vio.cpp)
 target_link_libraries(vio ${catkin_LIBRARIES} 
 	qp )
@@ -173,12 +178,6 @@ add_executable(plot src/plot.cpp)
 target_link_libraries(plot
   ${catkin_LIBRARIES} )
 
-#attitude_control
-add_executable(attitude_control src/attitude_control.cpp)
-target_link_libraries(attitude_control
-	${catkin_LIBRARIES} 
-	${PYTHON_LIBRARIES}
-	qp )
 
 #vio_trajectory
 add_executable(vio_trajectory src/vio_trajectory.cpp)
@@ -192,18 +191,14 @@ add_executable(motive src/motive.cpp)
 target_link_libraries(motive 
 	${catkin_LIBRARIES} )
 
-#attitude_compute
-add_executable(attitude_compute src/attitude_compute.cpp)
-target_link_libraries(attitude_compute
-  ${catkin_LIBRARIES} )
-
 #velocity_cbf_generator
 add_executable(velocity_cbf_generator 
 	node/velocity_cbf_generator_node.cpp 
 	src/getch.cpp )
 target_link_libraries(velocity_cbf_generator 
 	${catkin_LIBRARIES} 
-	OsqpEigen::OsqpEigen )
+	OsqpEigen::OsqpEigen 
+  origin_publisher)
 target_include_directories(velocity_cbf_generator PRIVATE
 	include/${PROJECT_NAME}/ )
 
