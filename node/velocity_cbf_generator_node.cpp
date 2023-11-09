@@ -371,18 +371,6 @@ int main(int argc, char **argv)
         ROS_INFO("Wait for UAV all takeoff signal");
     }
     ROS_INFO("get UAV all takeoff signal");
-
-    ROS_INFO("Wait for UAV all start signal");
-    while (ros::ok()) {
-        if(start_all_drone == 1){
-            break;
-        }
-        ros::spinOnce();
-        rate.sleep();
-        ROS_INFO("Wait for UAV all start signal");
-    }
-    ROS_INFO("get UAV all start signal");
-
     
     //send a few velocity setpoints before starting
     for(int i = 0; ros::ok() && i < 20; i++){
@@ -419,6 +407,18 @@ int main(int argc, char **argv)
     }
 	
     sleep(10);
+
+    ROS_INFO("Wait for UAV all start signal");
+    while (ros::ok()) {
+        if(start_all_drone == 1){
+            break;
+        }
+        ros::spinOnce();
+        rate.sleep();
+        ROS_INFO("Wait for UAV all start signal");
+    }
+    ROS_INFO("get UAV all start signal");
+
 
     while (ros::ok()) {
         if (current_state.mode != "GUIDED" &&
