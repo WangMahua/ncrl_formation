@@ -101,9 +101,14 @@ def set_home_position(mav, pub):
     send_message(msg, mav, pub)
 
 if __name__=="__main__":
+    UAVID = rospy.get_param('UAV_ID', default=0)
+    rospy.sleep(10)
     try:
         rospy.init_node("origin_publisher")
-        mavlink_pub = rospy.Publisher("/mavlink/to", Mavlink, queue_size=20)
+
+        topic = "/MAV" + str(UAVID) + "/mavlink/to"
+        print("send to topic: ", format(topic))
+        mavlink_pub = rospy.Publisher(topic, Mavlink, queue_size=20)
 
         # Set up mavlink instance
         f = fifo()

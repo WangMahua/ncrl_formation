@@ -5,6 +5,7 @@
 #include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
+#include <mavros_msgs/Mavlink.h>
 #include <std_msgs/Int32.h>
 #include "getch.h"
 #include <cmath>
@@ -13,7 +14,6 @@
 #include "OsqpEigen/OsqpEigen.h"
 #include <Eigen/Dense>
 #include <queue>
-#include "origin_publisher.h"
 
 #define gravity 9.806
 
@@ -321,7 +321,6 @@ int main(int argc, char **argv)
 
     // publisher
     ros::Publisher local_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("mavros/setpoint_velocity/cmd_vel", 2);
-    ros::Publisher mavlink_pub = nh.advertise<mavros_msgs::Mavlink>("mavlink/to", 20);
     // service
     ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
@@ -340,8 +339,6 @@ int main(int argc, char **argv)
                          CBF_object(nh, "/MAV3/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 3),
                          CBF_object(nh, "/MAV4/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 4)};
 
-    OriginPublisher origin_publisher(nh, UAV_ID);
-
     ROS_INFO("Wait for pose and desired input init");
     while (ros::ok() && (!desired_input_init || !pose_init)) {
         ros::spinOnce();
@@ -358,9 +355,11 @@ int main(int argc, char **argv)
     }
     ROS_INFO("FCU connected");
 
-    ROS_INFO("Setting initial position...");
-    origin_publisher.run();
-
+    ROS_INFO("Wait for setting origin and home position...");
+    string mavlink_topic = std::string("/MAV") + std::to_string(UAV_ID) + std::string("/mavlink/to");
+    ros::topic::waitForMessage<mavros_msgs::Mavlink>(mavlink_topic, ros::Duration(10.0));
+    ROS_INFO("Message received or timeout reached. Continuing execution.");
+    sleep(2);
 
     ROS_INFO("Wait for UAV all takeoff signal");
     while (ros::ok()) {

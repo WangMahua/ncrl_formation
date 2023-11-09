@@ -15,16 +15,18 @@
                              1,1,0,0,0,
                              1,1,1,0,0,
                              1,1,1,1,0,
-                             1,1,1,1,1]</rosparam>
-            <include file="$(find mavros)/launch/apm.launch">
-                <arg name="fcu_url" value="$(arg fcu_url)"/>
-                <arg name="gcs_url" value="$(arg gcs_url)"/>
-                <arg name="tgt_system" value="$(arg SYS_ID)"/>
-            </include> 
-            <node name="topic_tool" pkg="flight_control" type="topic_tool"></node>
-            <node name="formation" pkg="flight_control" type="formation"></node>
-            <node name="velocity_cbf_generator" pkg="flight_control" type="velocity_cbf_generator" output="screen">
-                <rosparam subst_value="true">
+                             1,1,1,1,1]
+        </rosparam>
+        <include file="$(find mavros)/launch/apm.launch">
+            <arg name="fcu_url" value="$(arg fcu_url)"/>
+            <arg name="gcs_url" value="$(arg gcs_url)"/>
+            <arg name="tgt_system" value="$(arg SYS_ID)"/>
+        </include> 
+        <node name="topic_tool" pkg="flight_control" type="topic_tool"></node>
+        <node name="formation" pkg="flight_control" type="formation"></node>
+        <node name="origin_py" pkg="flight_control" type="origin.py" output="screen"></node>
+        <node name="velocity_cbf_generator" pkg="flight_control" type="velocity_cbf_generator" output="screen">
+            <rosparam subst_value="true">
                     use_input: "velocity"  #velocity,position
             </rosparam>
         </node>

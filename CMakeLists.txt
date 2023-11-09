@@ -141,13 +141,6 @@ add_library(qp
 target_link_libraries(
     qp  ${PYTHON_LIBRARIES}
 )
-add_library(origin_publisher
-  src/origin_publisher.cpp
-
-)
-target_include_directories(origin_publisher PRIVATE
-  include/flight_control/
-)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -198,7 +191,7 @@ add_executable(velocity_cbf_generator
 target_link_libraries(velocity_cbf_generator 
 	${catkin_LIBRARIES} 
 	OsqpEigen::OsqpEigen 
-  origin_publisher)
+  )
 target_include_directories(velocity_cbf_generator PRIVATE
 	include/${PROJECT_NAME}/ )
 
