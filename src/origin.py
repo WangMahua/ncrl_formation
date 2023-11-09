@@ -112,7 +112,7 @@ if __name__=="__main__":
 
         # Set up mavlink instance
         f = fifo()
-        mav = MAV_APM.MAVLink(f, srcSystem=1, srcComponent=1)
+        mav = MAV_APM.MAVLink(f, srcSystem=UAVID, srcComponent=1)
         print(mav)
 
         # wait to initialize
