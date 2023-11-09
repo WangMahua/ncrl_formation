@@ -447,6 +447,8 @@ int main(int argc, char **argv)
             set_mode_client.call(offb_set_mode);
             arm_cmd.request.value = false;
             arming_client.call(arm_cmd);
+            sleep(3);
+            return 0;
         }
         //ROS_INFO("setpoint: %.2f, %.2f, %.2f, %.2f", desired_pose.pose.position.x, desired_pose.pose.position.y, desired_pose.pose.position.z, desired_yaw/M_PI*180);
         //follow desired_pose
