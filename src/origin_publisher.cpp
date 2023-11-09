@@ -12,8 +12,8 @@ void OriginPublisher::send_message(const mavlink_message_t& mavlink_msg) {
     mavros_msgs::Mavlink rosmsg;
     rosmsg.len = len;
     rosmsg.seq = 0;
-    rosmsg.sysid = mavlink_msg.sysid;
-    rosmsg.compid = mavlink_msg.compid;
+    rosmsg.sysid = mavlink_msg.sysid;  // Use mavlink_msg.sysid
+    rosmsg.compid = mavlink_msg.compid;  // Use mavlink_msg.compid
     rosmsg.msgid = mavlink_msg.msgid;
     rosmsg.payload64.assign(buffer, buffer + len);
 
@@ -30,7 +30,7 @@ void OriginPublisher::set_global_origin() {
 
 void OriginPublisher::set_home_position() {
     mavlink_message_t mavlink_msg;
-    float quat[] = {1, 0, 0, 0};
+    const float quat[] = {1, 0, 0, 0};
     mavlink_msg_set_home_position_pack(SYSID, 1, &mavlink_msg, SYSID, lat, lon, alt, 0, 0, 1, quat, 0, 0, 1, 0);
     send_message(mavlink_msg);
 }

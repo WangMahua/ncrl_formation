@@ -1,6 +1,6 @@
 <launch>
     <arg name="fcu_url" default="/dev/ttyUSB0:230400"/>
-    <arg name="gcs_url" default="udp://@192.168.86.33"/>
+    <arg name="gcs_url" default="udp://@192.168.50.254"/>
     <arg name="SYS_ID" default="1"/>
 
     <group ns="MAV$(arg SYS_ID)">
@@ -16,8 +16,6 @@
                              1,1,1,0,0,
                              1,1,1,1,0,
                              1,1,1,1,1]</rosparam>
-        <param name="sub_topic" value=>
-
             <include file="$(find mavros)/launch/apm.launch">
                 <arg name="fcu_url" value="$(arg fcu_url)"/>
                 <arg name="gcs_url" value="$(arg gcs_url)"/>
