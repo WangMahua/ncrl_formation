@@ -329,11 +329,18 @@ int main(int argc, char **argv)
     ros::param::get("MAV_safe_D", MAV_SafeDistance);
 
 
-    CBF_object cbO[5] = {CBF_object(nh, "/leader_pose",obstacle_SafeDistance, obstacle_Gamma, 0),
+    if(CBF_object::self_id == 1){
+        CBF_object cbO[4] = {CBF_object(nh, "/leader_pose",obstacle_SafeDistance, obstacle_Gamma, 0),
                          CBF_object(nh, "/MAV1/mavros/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 1),
+                         CBF_object(nh, "local/MAV2/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 2),
+                         CBF_object(nh, "local/MAV6/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 4)};
+    }else if(CBF_object::self_id == 2){
+        CBF_object cbO[4] = {CBF_object(nh, "/leader_pose",obstacle_SafeDistance, obstacle_Gamma, 0),
+                         CBF_object(nh, "local/MAV1/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 1),
                          CBF_object(nh, "/MAV2/mavros/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 2),
-                         CBF_object(nh, "/MAV3/mavros/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 3),
-                         CBF_object(nh, "/MAV6/mavros/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 4)};
+                         CBF_object(nh, "local/MAV6/local_position/pose_initialized", MAV_SafeDistance, MAV_Gamma, 4)};
+    }
+   
 
     ROS_INFO("Wait for pose and desired input init");
     while (ros::ok() && (!desired_input_init || !pose_init)) {

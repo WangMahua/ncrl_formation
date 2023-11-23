@@ -52,16 +52,38 @@ def pose_init_cb(msg):
 	else:
 		rospy.loginfo("cannot init pose")
 
+def neighbor_pos_cb(id):
+        def callback(msg):
+                local_neighbor_pos_pub[id].publish(msg)
+        return callback
+
 if __name__ == '__main__':
 	
         rospy.init_node('gps_init_py')
+        ns = rospy.get_namespace()
+        
         pose_init_sub = rospy.Subscriber('/uav_init', Int32, pose_init_cb)
         gps_origin_sub = rospy.Subscriber('/MAV6/mavros/global_position/global', NavSatFix, gps_origin_cb)
         gps_self_sub = rospy.Subscriber('mavros/global_position/global', NavSatFix, gps_self_cb)
         gps_pose_sub = rospy.Subscriber('mavros/local_position/pose', PoseStamped, gps_pose_cb)
         leader_pose_sub = rospy.Subscriber('/leader_pose', PoseStamped, time_cb)
 
-        gps_pose_pub = rospy.Publisher('mavros/local_position/pose_initialized', PoseStamped, queue_size=10)
+        if ns == "MAV1":
+                neighbor_pos_sub = [rospy.Subscriber('/MAV2/mavros/local_position/pose_initialized', PoseStamped, neighbor_pos_cb(2)),
+                                rospy.Subscriber('/MAV6/mavros/local_position/pose_initialized', PoseStamped, neighbor_pos_cb(3))]
+        elif ns == "MAV2":
+                neighbor_pos_sub = [rospy.Subscriber('/MAV1/mavros/local_position/pose_initialized', PoseStamped, neighbor_pos_cb(1)),
+                                rospy.Subscriber('/MAV6/mavros/local_position/pose_initialized', PoseStamped, neighbor_pos_cb(3))]
+
+        elif ns == "MAV6":
+                neighbor_pos_sub = [rospy.Subscriber('/MAV1/mavros/local_position/pose_initialized', PoseStamped, neighbor_pos_cb(1)),
+                                rospy.Subscriber('/MAV2/mavros/local_position/pose_initialized', PoseStamped, neighbor_pos_cb(2))]
+        
+        local_neighbor_pos_pub = [rospy.Publisher('local/MAV1/local_position/pose_initialized', PoseStamped, queue_size=1),
+                                        rospy.Publisher('local/MAV2/local_position/pose_initialized', PoseStamped, queue_size=1),
+                                                rospy.Subscriber('local/MAV6/local_position/pose_initialized', PoseStamped, queue_size=1)]
+        
+        gps_pose_pub = rospy.Publisher('mavros/local_position/pose_initialized', PoseStamped, queue_size=1)
         
         gps_pose_initialized.pose.position.x = 0
         gps_pose_initialized.pose.position.y = 0
