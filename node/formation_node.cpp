@@ -154,16 +154,24 @@ int main(int argc, char **argv)
 
     ros::param::get("UAV_ID", MAV::UAV_ID);
     ros::param::get("delay_step", MAV::delay_step);
-
+MAV mav[5] = {MAV(nh, "/leader_pose", 0),
+                  MAV(nh, "/MAV1/mavros/local_position/pose_initialized", 1),
+                  MAV(nh, "/MAV2/mavros/local_position/pose_initialized", 2),
+                  MAV(nh, "/MAV3/mavros/local_position/pose_initialized", 3),
+                  MAV(nh, "/MAV4/mavros/local_position/pose_initialized", 4)};
     //Subscriber
     if(MAV::UAV_ID == 1){
         MAV mav[3] = {MAV(nh, "/leader_pose", 0),
                       MAV(nh, "/MAV1/mavros/local_position/pose_initialized", 1),
-                      MAV(nh, "local/MAV2/local_position/pose_initialized", 2)};
+                      MAV(nh, "local/MAV2/local_position/pose_initialized", 2),
+                  MAV(nh, "/MAV3/mavros/local_position/pose_initialized", 3),
+                  MAV(nh, "/MAV4/mavros/local_position/pose_initialized", 4)};
     }else if(MAV::UAV_ID == 2){
         MAV mav[3] = {MAV(nh, "/leader_pose", 0),
                       MAV(nh, "local/MAV1/local_position/pose_initialized", 1),
-                      MAV(nh, "/MAV2/mavros/local_position/pose_initialized", 2)};
+                      MAV(nh, "/MAV2/mavros/local_position/pose_initialized", 2),
+                  MAV(nh, "/MAV3/mavros/local_position/pose_initialized", 3),
+                  MAV(nh, "/MAV4/mavros/local_position/pose_initialized", 4)};
     }
     
 
