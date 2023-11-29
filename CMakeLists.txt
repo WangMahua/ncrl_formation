@@ -130,10 +130,10 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/flight_control.cpp
 # )
-add_library(jetson_tx2
-        include/flight_control/jetsonTX2GPIO.cpp
-        include/flight_control/jetsonTX2GPIO.h
-)
+# add_library(jetson_tx2
+#         include/flight_control/jetsonTX2GPIO.cpp
+#         include/flight_control/jetsonTX2GPIO.h
+# )
 add_library(qp
    include/flight_control/qptrajectory.cpp
    include/flight_control/qptrajectory.h
@@ -146,17 +146,12 @@ target_link_libraries(
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-set(HEADERS_ include/flight_control/jetsonConstants.h  include/flight_control/jetsonStatus.h)
+# set(HEADERS_ include/flight_control/jetsonConstants.h  include/flight_control/jetsonStatus.h)
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/flight_control_node.cpp)
 
-add_executable(time_trigger src/time_trigger.cpp ${HEADERS_})
-target_link_libraries(time_trigger
-  ${catkin_LIBRARIES} 
-  jetson_tx2
-)
 
 add_executable(sync src/sync.cpp)
 target_link_libraries(sync
@@ -188,6 +183,7 @@ target_link_libraries(motive
 add_executable(velocity_cbf_generator 
 	node/velocity_cbf_generator_node.cpp 
 	src/getch.cpp )
+
 target_link_libraries(velocity_cbf_generator 
 	${catkin_LIBRARIES} 
 	OsqpEigen::OsqpEigen 
@@ -199,6 +195,7 @@ target_include_directories(velocity_cbf_generator PRIVATE
 add_executable(keyboard_panel 
 	node/keyboard_panel_node.cpp
     src/getch.cpp)
+
 target_link_libraries(keyboard_panel
 	${catkin_LIBRARIES} )
 target_include_directories(keyboard_panel PRIVATE
@@ -214,8 +211,7 @@ add_executable(leader_pose node/leader_pose_node.cpp
 	src/getch.cpp)
 target_link_libraries(leader_pose
 	${catkin_LIBRARIES} )
-target_include_directories(leader_pose PRIVATE
-	include/${PROJECT_NAME}/ )
+
 
 #		formation
 add_executable(formation node/formation_node.cpp)
@@ -223,6 +219,31 @@ target_link_libraries(formation
 	${catkin_LIBRARIES} )
 target_include_directories(formation PRIVATE
 	include/${PROJECT_NAME}/ )
+
+#		vor 
+add_executable(uav_controller 
+	node/uav_controller_node.cpp 
+	src/getch.cpp )
+
+target_link_libraries(uav_controller 
+	${catkin_LIBRARIES} 
+	OsqpEigen::OsqpEigen 
+  )
+target_include_directories(uav_controller PRIVATE
+	include/${PROJECT_NAME}/ )
+
+
+#		ground station 
+add_executable(ground_station 
+	node/ground_station_node.cpp 
+	src/getch.cpp )
+target_link_libraries(ground_station 
+	${catkin_LIBRARIES} 
+	OsqpEigen::OsqpEigen 
+  )
+target_include_directories(ground_station PRIVATE
+	include/${PROJECT_NAME}/ )
+
 #############
 ## Install ##
 #############

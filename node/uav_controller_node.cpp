@@ -294,14 +294,12 @@ void takeoff_cb(const std_msgs::Int32 msg){
 int main(int argc, char **argv)
 {
     //  ROS_initialize  //
-    ros::init(argc, argv, "velocity_cbf");
+    ros::init(argc, argv, "uav_controller");
     ros::NodeHandle nh,private_nh("~");
 
     int UAV_ID;
     ros::param::get("UAV_ID", UAV_ID);
     ros::param::get("delay_step", CBF_object::delay_step);
-    ros::param::get("hover_x", CBF_object::delay_step);
-    ros::param::get("hover_y", CBF_object::delay_step);
 
     string use_input_s;
     if(private_nh.getParam("use_input", use_input_s) == false) {
@@ -329,10 +327,12 @@ int main(int argc, char **argv)
     ros::Rate rate(100);
 
     float obstacle_Gamma, obstacle_SafeDistance, MAV_Gamma, MAV_SafeDistance;
+	bool cbf_mode;
     ros::param::get("obs_gamma", obstacle_Gamma);
     ros::param::get("obs_safe_D", obstacle_SafeDistance);
     ros::param::get("MAV_gamma", MAV_Gamma);
     ros::param::get("MAV_safe_D", MAV_SafeDistance);
+	ros::param::get("cbf", cbf_mode);
 
     CBF_object::self_id = UAV_ID;
     CBF_object cbO[5] = {CBF_object(nh, "/vrpn_client_node/obstacle/pose",obstacle_SafeDistance, obstacle_Gamma, 0),
@@ -340,8 +340,6 @@ int main(int argc, char **argv)
                          CBF_object(nh, "/MAV2/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 2),
                          CBF_object(nh, "/MAV3/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 3),
                          CBF_object(nh, "/MAV4/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 4)};
-
-
 
     ROS_INFO("Wait for pose and desired input init");
     while (ros::ok() && (!desired_input_init || !pose_init)) {
@@ -464,17 +462,21 @@ int main(int argc, char **argv)
         //ROS_INFO("origin input:vx: %f vy: %f \n",desired_vel.twist.linear.x,desired_vel.twist.linear.y); 
          
         //is_obstacle_exit
-        if(( ros::Time::now() - cbO[0].getPose().header.stamp)<ros::Duration(0.5)){
-            if(velocity_cbf( desired_vel_raw , &desired_vel, cbO)!=0){
-                desired_vel = desired_vel_raw;
-            }
-            //  ROS_INFO("cbf input:vx: %f vy: %f \n",desired_vel.twist.linear.x,desired_vel.twist.linear.y); 
+		if(cbf_mode){
+			if(( ros::Time::now() - cbO[0].getPose().header.stamp)<ros::Duration(0.5)){
+				if(velocity_cbf( desired_vel_raw , &desired_vel, cbO)!=0){
+					desired_vel = desired_vel_raw;
+				}
+				//  ROS_INFO("cbf input:vx: %f vy: %f \n",desired_vel.twist.linear.x,desired_vel.twist.linear.y); 
 
-        }
-        else{
-            desired_vel = desired_vel_raw;
-        }
-        
+			}
+			else{
+				desired_vel = desired_vel_raw;
+			}
+		}else{
+			desired_vel = desired_vel_raw;
+		}
+
         follow_yaw(desired_vel, M_PI/2);
         local_vel_pub.publish(desired_vel);
 
