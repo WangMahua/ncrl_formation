@@ -20,6 +20,10 @@ geometry_msgs::PoseStamped leader_pose;
 geometry_msgs::Point wayPoint_final;
 geometry_msgs::Point wayPoint_initial;
 
+geometry_msgs::TwistStamped cmd_vel_1;
+geometry_msgs::PoseStamped cmd_pos_1;
+std_msgs::Int32 gs_msg;
+
 int track_count = 0;
 float sum_x = 0;
 float sum_y = 0;
@@ -50,6 +54,7 @@ void start_takeoff(){
 }
 
 void start_land(){
+	gs_msg.data = 2;
 	if(leader_mode == LAND || leader_pose.pose.position.z <= 0.01 ){
 		ROS_WARN("leader already landing or it's on the land");
 	}
@@ -202,6 +207,17 @@ void waypoint_cb(const geometry_msgs::Point::ConstPtr& msg)
 }
 
 
+void hover(){
+	gs_msg.data = 1;
+	float hover_x = -0.25;
+	float hover_y = -0.25;
+	cmd_pos_1.pose.position.x = -0.25;
+	cmd_pos_1.pose.position.y = -0.25;
+	cmd_pos_1.pose.position.z = 0.0;
+}
+
+
+
 int main(int argc, char **argv)
 {
 	leader_mode = DISARM;
@@ -211,8 +227,11 @@ int main(int argc, char **argv)
 	ros::Publisher uav_killer_pub = nh.advertise<std_msgs::Int32>("/uav_kill", 10);
 	ros::Publisher uav_start_pub = nh.advertise<std_msgs::Int32>("/uav_start", 10);
 	ros::Publisher uav_takeoff_pub = nh.advertise<std_msgs::Int32>("/uav_takeoff", 10);
-	ros::Puvlisher state_pub = nh.subscribe<std_msgs::Int32>("/GS_state", 10);
-	
+	ros::Publisher state_pub = nh.advertise<std_msgs::Int32>("/GS_state", 10);
+
+    //Publisher    
+    ros::Publisher desired_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("/MAV1/desired_velocity_raw", 100);
+	ros::Publisher desired_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("/MAV1/desired_pose", 10);
 	
 	ros::Subscriber point_sub = nh.subscribe<geometry_msgs::Point>("/waypoint", 10, waypoint_cb);
 
@@ -263,6 +282,10 @@ int main(int argc, char **argv)
 					start_all_drone = 1;
 					ROS_INFO("start all drone");
                     break;
+                case 104:    // (h) uav_hover
+					hover();
+					ROS_INFO("start all drone");
+                    break;
 			}
         }
     /**
@@ -278,8 +301,9 @@ int main(int argc, char **argv)
 	std_msgs::Int32 takeoff_msg;
 	takeoff_msg.data = takeoff_all_drone;
 	uav_start_pub.publish(start_msg);
-    leader_pose_pub.publish(leader_pose);
 	uav_takeoff_pub.publish(takeoff_msg);
+	desired_pos_pub.publish(cmd_pos_1);
+	state_pub.publish(gs_msg);
     ros::spinOnce();
 
     loop_rate.sleep();

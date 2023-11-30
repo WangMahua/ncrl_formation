@@ -212,6 +212,9 @@ add_executable(leader_pose node/leader_pose_node.cpp
 target_link_libraries(leader_pose
 	${catkin_LIBRARIES} )
 
+target_include_directories(leader_pose PRIVATE
+include/${PROJECT_NAME}/ )
+
 
 #		formation
 add_executable(formation node/formation_node.cpp)

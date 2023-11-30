@@ -34,6 +34,7 @@ double desired_yaw = 0;
 int kill_all_drone = 0;
 int start_all_drone = 0;
 int takeoff_all_drone = 0;
+int gs_state = 0;
 // var for desired_velocity
 geometry_msgs::TwistStamped desired_vel_raw;
 geometry_msgs::TwistStamped desired_vel;        //output
@@ -291,6 +292,11 @@ void takeoff_cb(const std_msgs::Int32 msg){
     takeoff_all_drone = msg.data;
 }
 
+void gs_cb(const std_msgs::Int32 msg){
+    //store odometry into global variable
+    gs_state = msg.data;
+}
+
 int main(int argc, char **argv)
 {
     //  ROS_initialize  //
@@ -319,6 +325,8 @@ int main(int argc, char **argv)
     ros::Subscriber uav_killer_sub = nh.subscribe<std_msgs::Int32>("/uav_kill", 10, kill_cb);
     ros::Subscriber uav_takeoff_sub = nh.subscribe<std_msgs::Int32>("/uav_takeoff", 10, takeoff_cb);
 
+    ros::Subscriber gs_sub = nh.subscribe<std_msgs::Int32>("/GS_state", 10, gs_cb);
+
     // publisher
     ros::Publisher local_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("mavros/setpoint_velocity/cmd_vel", 2);
     // service
@@ -328,11 +336,14 @@ int main(int argc, char **argv)
 
     float obstacle_Gamma, obstacle_SafeDistance, MAV_Gamma, MAV_SafeDistance;
 	bool cbf_mode;
+    float hover_x,hover_y;
     ros::param::get("obs_gamma", obstacle_Gamma);
     ros::param::get("obs_safe_D", obstacle_SafeDistance);
     ros::param::get("MAV_gamma", MAV_Gamma);
     ros::param::get("MAV_safe_D", MAV_SafeDistance);
 	ros::param::get("cbf", cbf_mode);
+	ros::param::get("hover_x", hover_x);
+	ros::param::get("hover_y", hover_y);
 
     CBF_object::self_id = UAV_ID;
     CBF_object cbO[5] = {CBF_object(nh, "/vrpn_client_node/obstacle/pose",obstacle_SafeDistance, obstacle_Gamma, 0),
@@ -454,28 +465,35 @@ int main(int argc, char **argv)
         }
         //ROS_INFO("setpoint: %.2f, %.2f, %.2f, %.2f", desired_pose.pose.position.x, desired_pose.pose.position.y, desired_pose.pose.position.z, desired_yaw/M_PI*180);
         //follow desired_pose
-        if(use_input_s == "position"){
+        // if(use_input_s == "position"){
+        //     follow(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
+        // }
+        
+        // //avoid collicsion
+        // //ROS_INFO("origin input:vx: %f vy: %f \n",desired_vel.twist.linear.x,desired_vel.twist.linear.y); 
+         
+        // //is_obstacle_exit
+		// if(cbf_mode){
+		// 	if(( ros::Time::now() - cbO[0].getPose().header.stamp)<ros::Duration(0.5)){
+		// 		if(velocity_cbf( desired_vel_raw , &desired_vel, cbO)!=0){
+		// 			desired_vel = desired_vel_raw;
+		// 		}
+		// 		//  ROS_INFO("cbf input:vx: %f vy: %f \n",desired_vel.twist.linear.x,desired_vel.twist.linear.y); 
+
+		// 	}
+		// 	else{
+		// 		desired_vel = desired_vel_raw;
+		// 	}
+		// }else{
+		// 	desired_vel = desired_vel_raw;
+		// }
+
+        if(gs_state==1){
             follow(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
         }
-        
-        //avoid collicsion
-        //ROS_INFO("origin input:vx: %f vy: %f \n",desired_vel.twist.linear.x,desired_vel.twist.linear.y); 
-         
-        //is_obstacle_exit
-		if(cbf_mode){
-			if(( ros::Time::now() - cbO[0].getPose().header.stamp)<ros::Duration(0.5)){
-				if(velocity_cbf( desired_vel_raw , &desired_vel, cbO)!=0){
-					desired_vel = desired_vel_raw;
-				}
-				//  ROS_INFO("cbf input:vx: %f vy: %f \n",desired_vel.twist.linear.x,desired_vel.twist.linear.y); 
-
-			}
-			else{
-				desired_vel = desired_vel_raw;
-			}
-		}else{
-			desired_vel = desired_vel_raw;
-		}
+        if(gs_state==2){
+            
+        }
 
         follow_yaw(desired_vel, M_PI/2);
         local_vel_pub.publish(desired_vel);
