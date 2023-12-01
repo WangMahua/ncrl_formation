@@ -423,6 +423,10 @@ int main(int argc, char **argv)
 
     // publisher
     ros::Publisher local_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("mavros/setpoint_velocity/cmd_vel", 2);
+
+    // publisher
+    ros::Publisher test_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("test_output", 2);
+
     // service
     ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
@@ -599,8 +603,9 @@ int main(int argc, char **argv)
         std::cout << desired_vel.twist.linear.y << std::endl;
         std::cout << desired_vel.twist.linear.z << std::endl;
 
-        local_vel_pub.publish(desired_vel);
-        // local_vel_pub.publish(desired_vel_init);
+        // local_vel_pub.publish(desired_vel);
+        test_vel_pub.publish(desired_vel);
+        local_vel_pub.publish(desired_vel_init);
 
         ros::spinOnce();
         rate.sleep();
