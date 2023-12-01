@@ -38,6 +38,7 @@ int gs_state = 0;
 // var for desired_velocity
 geometry_msgs::TwistStamped desired_vel_raw;
 geometry_msgs::TwistStamped desired_vel;        //output
+geometry_msgs::TwistStamped desired_vel_init;        //output
 
 // var for obstacle
 //sgeometry_msgs::PoseStamped obstacle_pose;
@@ -162,6 +163,52 @@ void desired_vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg){
     }
 }
 
+void land(geometry_msgs::PoseStamped desired_pose,double desired_yaw, geometry_msgs::TwistStamped *desired_vel, geometry_msgs::PoseStamped uav_pose)
+{
+    double err_x, err_y, err_z, err_yaw;
+    double ux,uy,uz,uyaw;
+    //compute error: desired - measurement
+
+    if(desired_pose.pose.position.z < uav_pose.pose.position.z - 0.2){
+        desired_pose.pose.position.z = uav_pose.pose.position.z - 0.2;
+    }
+
+    err_x = desired_pose.pose.position.x - uav_pose.pose.position.x;
+    err_y = desired_pose.pose.position.y - uav_pose.pose.position.y;
+    err_z = desired_pose.pose.position.z - uav_pose.pose.position.z;
+    err_yaw = desired_yaw - yaw;
+
+    bound_yaw( &err_yaw );
+
+    //ROS_INFO("err: %.3f,%.3f,%.3f,%.3f", err_x, err_y, err_z, err_yaw/M_PI*180);
+
+    ux = KPx*err_x;
+    uy = KPy*err_y;
+    uz = KPz*err_z;
+    uyaw = KPyaw*err_yaw;
+
+    //set max&min for control input
+    /*
+    if(ux<=-1.5 ||ux>=1.5)
+    {
+      ux = 1.5*ux/abs(ux);
+    }
+    if(uy<=-1.5 ||uy>=1.5)
+    {
+      uy = 1.5*uy/abs(uy);
+    }
+    */
+    if(uz<=-0.4 ||uz>=0.4)
+    {
+      uz = 0.4*uz/abs(uz);
+    }
+    //output control input
+    desired_vel->twist.linear.x = ux;
+    desired_vel->twist.linear.y = uy;
+    desired_vel->twist.linear.z = uz;
+    desired_vel->twist.angular.z = uyaw;
+}
+
 void follow(geometry_msgs::PoseStamped desired_pose,double desired_yaw, geometry_msgs::TwistStamped *desired_vel, geometry_msgs::PoseStamped uav_pose)
 {
     double err_x, err_y, err_z, err_yaw;
@@ -202,6 +249,53 @@ void follow(geometry_msgs::PoseStamped desired_pose,double desired_yaw, geometry
     desired_vel->twist.linear.z = uz;
     desired_vel->twist.angular.z = uyaw;
 }
+
+void takeoff(geometry_msgs::PoseStamped desired_pose,double desired_yaw, geometry_msgs::TwistStamped *desired_vel, geometry_msgs::PoseStamped uav_pose)
+{
+    double err_x, err_y, err_z, err_yaw;
+    double ux,uy,uz,uyaw;
+    //compute error: desired - measurement
+
+    if(desired_pose.pose.position.z > uav_pose.pose.position.z + 0.2){
+        desired_pose.pose.position.z = uav_pose.pose.position.z + 0.2;
+    }
+
+    err_x = desired_pose.pose.position.x - uav_pose.pose.position.x;
+    err_y = desired_pose.pose.position.y - uav_pose.pose.position.y;
+    err_z = desired_pose.pose.position.z - uav_pose.pose.position.z;
+    err_yaw = desired_yaw - yaw;
+
+    bound_yaw( &err_yaw );
+
+    //ROS_INFO("err: %.3f,%.3f,%.3f,%.3f", err_x, err_y, err_z, err_yaw/M_PI*180);
+
+    ux = KPx*err_x;
+    uy = KPy*err_y;
+    uz = KPz*err_z;
+    uyaw = KPyaw*err_yaw;
+
+    //set max&min for control input
+    /*
+    if(ux<=-1.5 ||ux>=1.5)
+    {
+      ux = 1.5*ux/abs(ux);
+    }
+    if(uy<=-1.5 ||uy>=1.5)
+    {
+      uy = 1.5*uy/abs(uy);
+    }
+    */
+    if(uz<=-0.4 ||uz>=0.4)
+    {
+      uz = 0.4*uz/abs(uz);
+    }
+    //output control input
+    desired_vel->twist.linear.x = ux;
+    desired_vel->twist.linear.y = uy;
+    desired_vel->twist.linear.z = uz;
+    desired_vel->twist.angular.z = uyaw;
+}
+
 
 void follow_yaw(geometry_msgs::TwistStamped& desired_vel, double desired_yaw)
 {
@@ -488,15 +582,25 @@ int main(int argc, char **argv)
 		// 	desired_vel = desired_vel_raw;
 		// }
 
-        if(gs_state==1){
+        if(gs_state==1){ // takeoff 
+            takeoff(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
+        }
+        if(gs_state==2){ // hover 
             follow(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
         }
-        if(gs_state==2){
-            
+        if(gs_state==3){
+
         }
 
         follow_yaw(desired_vel, M_PI/2);
+
+        std::cout << "---" << std::endl;
+        std::cout << desired_vel.twist.linear.x << std::endl;
+        std::cout << desired_vel.twist.linear.y << std::endl;
+        std::cout << desired_vel.twist.linear.z << std::endl;
+
         local_vel_pub.publish(desired_vel);
+        // local_vel_pub.publish(desired_vel_init);
 
         ros::spinOnce();
         rate.sleep();

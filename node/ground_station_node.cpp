@@ -206,11 +206,24 @@ void waypoint_cb(const geometry_msgs::Point::ConstPtr& msg)
 		ROS_WARN("leader not in waypoint mode");
 }
 
+void takeoff(){
+	gs_msg.data = 1;
+	cmd_pos_1.pose.position.x = 0.0;
+	cmd_pos_1.pose.position.y = 0.0;
+	cmd_pos_1.pose.position.z = 0.7;
+}
 
 void hover(){
-	gs_msg.data = 1;
+	gs_msg.data = 2;
 	float hover_x = -0.25;
 	float hover_y = -0.25;
+	cmd_pos_1.pose.position.x = -0.25;
+	cmd_pos_1.pose.position.y = -0.25;
+	cmd_pos_1.pose.position.z = 0.8;
+}
+
+void land(){
+	gs_msg.data = 3;
 	cmd_pos_1.pose.position.x = -0.25;
 	cmd_pos_1.pose.position.y = -0.25;
 	cmd_pos_1.pose.position.z = 0.0;
