@@ -506,7 +506,7 @@ int main(int argc, char **argv)
 
     ros::ServiceClient takeoff_cl = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/takeoff");
     mavros_msgs::CommandTOL srv_takeoff;
-    srv_takeoff.request.altitude = 0.7;
+    srv_takeoff.request.altitude = 0.5;
     if(takeoff_cl.call(srv_takeoff))
     {
         ROS_INFO("srv_takeoff send success %d", srv_takeoff.response.success);
