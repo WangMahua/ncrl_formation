@@ -379,7 +379,7 @@ int main(int argc, char **argv)
 
         // local_vel_pub.publish(desired_vel);
         test_vel_pub.publish(desired_vel_raw);
-        local_vel_pub.publish(desired_vel_init);
+        local_vel_pub.publish(desired_vel_raw);
 
         ros::spinOnce();
         rate.sleep();
