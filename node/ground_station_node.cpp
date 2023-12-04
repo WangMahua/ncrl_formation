@@ -219,7 +219,7 @@ void hover(){
 	float hover_y = -0.25;
 	cmd_pos_1.pose.position.x = -0.25;
 	cmd_pos_1.pose.position.y = -0.25;
-	cmd_pos_1.pose.position.z = 0.8;
+	cmd_pos_1.pose.position.z = 0.5;
 }
 
 void land(){
@@ -255,7 +255,6 @@ int main(int argc, char **argv)
 	{
         //keyboard control
         int c = getch();
-        //ROS_INFO("C: %d",c);
         if (c != EOF) {
             switch (c) {
                 case 116:    // (t) takeoff
@@ -301,25 +300,25 @@ int main(int argc, char **argv)
                     break;
 			}
         }
-    /**
-     * This is a message object. You stuff it with data, and then publish it.
-     */
-	leader_pose_generate(&leader_pose);
-	
-	std_msgs::Int32 kill_msg;
-	kill_msg.data=kill_all_drone;
-	uav_killer_pub.publish(kill_msg);
-	std_msgs::Int32 start_msg;
-	start_msg.data=start_all_drone;
-	std_msgs::Int32 takeoff_msg;
-	takeoff_msg.data = takeoff_all_drone;
-	uav_start_pub.publish(start_msg);
-	uav_takeoff_pub.publish(takeoff_msg);
-	desired_pos_pub.publish(cmd_pos_1);
-	state_pub.publish(gs_msg);
-    ros::spinOnce();
+		/**
+		 * This is a message object. You stuff it with data, and then publish it.
+		 */
+		leader_pose_generate(&leader_pose);
+		
+		std_msgs::Int32 kill_msg;
+		kill_msg.data=kill_all_drone;
+		uav_killer_pub.publish(kill_msg);
+		std_msgs::Int32 start_msg;
+		start_msg.data=start_all_drone;
+		std_msgs::Int32 takeoff_msg;
+		takeoff_msg.data = takeoff_all_drone;
+		uav_start_pub.publish(start_msg);
+		uav_takeoff_pub.publish(takeoff_msg);
+		desired_pos_pub.publish(cmd_pos_1);
+		state_pub.publish(gs_msg);
+		ros::spinOnce();
 
-    loop_rate.sleep();
+		loop_rate.sleep();
   }
 
 

@@ -46,71 +46,6 @@ mavros_msgs::State current_state;
 geometry_msgs::PoseStamped host_mocap;
 geometry_msgs::PoseStamped initial_pose;
 
-class CBF_object
-{
-private:
-    geometry_msgs::PoseStamped pose;
-    ros::Subscriber pose_sub;
-    bool exist;
-    float safeDistance;
-    float gamma;
-    int id;
-    queue<geometry_msgs::PoseStamped> pose_queue;
-public:
-    CBF_object(ros::NodeHandle nh, string subTopic, float safe_D, float gm, int ID);
-    CBF_object(ros::NodeHandle nh, string subTopic);
-    void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
-    geometry_msgs::PoseStamped getPose();
-    bool getExist();
-    float getSafeDistance();
-    float getGamma();
-
-    static int self_id;
-    static int delay_step;
-};
-
-int CBF_object::self_id = 0;
-int CBF_object::delay_step = 0;
-
-CBF_object::CBF_object(ros::NodeHandle nh, string subTopic, float safe_D, float gm, int ID)
-{
-    pose_sub = nh.subscribe<geometry_msgs::PoseStamped>(subTopic, 10, &CBF_object::pose_cb, this);
-    exist = false;
-    safeDistance = safe_D;
-    gamma = gm;
-    id = ID;
-}
-CBF_object::CBF_object(ros::NodeHandle nh, string subTopic)
-{
-    pose_sub = nh.subscribe<geometry_msgs::PoseStamped>(subTopic, 10, &CBF_object::pose_cb, this);
-    exist = false;
-}
-
-void CBF_object::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
-{
-    exist = true;
-    if(id != self_id)
-    {
-	pose_queue.push(*msg);
-	if(pose_queue.size() >= delay_step)
-	{	
-	    pose = pose_queue.front();
-	    pose_queue = queue<geometry_msgs::PoseStamped>();
-	}
-    }
-    else
-	pose = *msg;
-}
-
-geometry_msgs::PoseStamped CBF_object::getPose(){return pose;}
-
-bool CBF_object::getExist(){return exist;}
-
-float CBF_object::getSafeDistance(){return safeDistance;}
-
-float CBF_object::getGamma(){return gamma;}
-
-
 void bound_yaw(double* yaw){
         if(*yaw>M_PI)
             *yaw = *yaw - 2*M_PI;
@@ -250,53 +185,6 @@ void follow(geometry_msgs::PoseStamped desired_pose,double desired_yaw, geometry
     desired_vel->twist.angular.z = uyaw;
 }
 
-void takeoff(geometry_msgs::PoseStamped desired_pose,double desired_yaw, geometry_msgs::TwistStamped *desired_vel, geometry_msgs::PoseStamped uav_pose)
-{
-    double err_x, err_y, err_z, err_yaw;
-    double ux,uy,uz,uyaw;
-    //compute error: desired - measurement
-
-    if(desired_pose.pose.position.z > uav_pose.pose.position.z + 0.2){
-        desired_pose.pose.position.z = uav_pose.pose.position.z + 0.2;
-    }
-
-    err_x = desired_pose.pose.position.x - uav_pose.pose.position.x;
-    err_y = desired_pose.pose.position.y - uav_pose.pose.position.y;
-    err_z = desired_pose.pose.position.z - uav_pose.pose.position.z;
-    err_yaw = desired_yaw - yaw;
-
-    bound_yaw( &err_yaw );
-
-    //ROS_INFO("err: %.3f,%.3f,%.3f,%.3f", err_x, err_y, err_z, err_yaw/M_PI*180);
-
-    ux = KPx*err_x;
-    uy = KPy*err_y;
-    uz = KPz*err_z;
-    uyaw = KPyaw*err_yaw;
-
-    //set max&min for control input
-    /*
-    if(ux<=-1.5 ||ux>=1.5)
-    {
-      ux = 1.5*ux/abs(ux);
-    }
-    if(uy<=-1.5 ||uy>=1.5)
-    {
-      uy = 1.5*uy/abs(uy);
-    }
-    */
-    if(uz<=-0.4 ||uz>=0.4)
-    {
-      uz = 0.4*uz/abs(uz);
-    }
-    //output control input
-    desired_vel->twist.linear.x = ux;
-    desired_vel->twist.linear.y = uy;
-    desired_vel->twist.linear.z = uz;
-    desired_vel->twist.angular.z = uyaw;
-}
-
-
 void follow_yaw(geometry_msgs::TwistStamped& desired_vel, double desired_yaw)
 {
 	double err_yaw, u_yaw;
@@ -306,72 +194,7 @@ void follow_yaw(geometry_msgs::TwistStamped& desired_vel, double desired_yaw)
 	desired_vel.twist.angular.z = u_yaw;
 }
 
-int velocity_cbf(geometry_msgs::TwistStamped desired_vel_raw,geometry_msgs::TwistStamped* desired_vel, CBF_object cbO[]){
 
-            Eigen::SparseMatrix<double> hessian_Matrix;
-            Eigen::VectorXd gradient;
-            Eigen::SparseMatrix<double> linearMatrix;
-            Eigen::VectorXd lowerBound;
-            Eigen::VectorXd upperBound;
-
-            hessian_Matrix.resize(2,2);
-            hessian_Matrix.insert(0,0) = 1;
-            hessian_Matrix.insert(1,0) = 0;
-            hessian_Matrix.insert(0,1) = 0;
-            hessian_Matrix.insert(1,1) = 1;
-
-            gradient.resize(2);
-            gradient << - desired_vel_raw.twist.linear.x , - desired_vel_raw.twist.linear.y;
-	   
-	    int cbf_num = 0;
-	    for(int i = 0; i < 5; i++)
-	    {
-	        if(cbO[i].getExist() == true)
-		      cbf_num++;
-	    }
-	   ////////////////////// cbf constraints ///////////////////////// 
-            upperBound.resize(cbf_num-1);
-            lowerBound.resize(cbf_num-1);
-            linearMatrix.resize(cbf_num-1,2);
-            int j = 0;
-            for(int i = 0; i < 5; i++)
-            {
-                if(i != CBF_object::self_id && cbO[i].getExist() == true)
-                {
-                    linearMatrix.insert(j,0) = 2*(cbO[i].getPose().pose.position.x - host_mocap.pose.position.x );
-                    linearMatrix.insert(j,1) = 2*(cbO[i].getPose().pose.position.y - host_mocap.pose.position.y );
-            	    upperBound(j) = cbO[i].getGamma()*(pow((cbO[i].getPose().pose.position.x - host_mocap.pose.position.x ),2)+
-           			 pow((cbO[i].getPose().pose.position.y - host_mocap.pose.position.y ),2)-
-            			 pow(cbO[i].getSafeDistance(),2));
-		    lowerBound(j) = -OsqpEigen::INFTY;
-
-		    j++;
-                }   
-            }
-
-            OsqpEigen::Solver solver;
-            solver.settings()->setWarmStart(true);
-            solver.settings()->setVerbosity(false);
-
-            solver.data()->setNumberOfVariables(2);
-            solver.data()->setNumberOfConstraints(cbf_num-1);
-
-            if(!solver.data()->setHessianMatrix(hessian_Matrix)) return 1;
-            if(!solver.data()->setGradient(gradient)) return 1;
-            if(!solver.data()->setLinearConstraintsMatrix(linearMatrix)) return 1;
-            if(!solver.data()->setLowerBound(lowerBound)) return 1;
-            if(!solver.data()->setUpperBound(upperBound)) return 1;
-            if(!solver.initSolver()) return 1;
-            if(solver.solveProblem() != OsqpEigen::ErrorExitFlag::NoError) return 1;
-
-            Eigen::VectorXd QPSolution;
-            QPSolution = solver.getSolution();
-            *desired_vel = desired_vel_raw;
-            desired_vel->twist.linear.x = QPSolution(0);
-            desired_vel->twist.linear.y = QPSolution(1);
-
-            return 0;
-}
 
 void start_cb(const std_msgs::Int32 msg){
     //store odometry into global variable
@@ -399,7 +222,6 @@ int main(int argc, char **argv)
 
     int UAV_ID;
     ros::param::get("UAV_ID", UAV_ID);
-    ros::param::get("delay_step", CBF_object::delay_step);
 
     string use_input_s;
     if(private_nh.getParam("use_input", use_input_s) == false) {
@@ -442,13 +264,6 @@ int main(int argc, char **argv)
 	ros::param::get("cbf", cbf_mode);
 	ros::param::get("hover_x", hover_x);
 	ros::param::get("hover_y", hover_y);
-
-    // CBF_object::self_id = UAV_ID;
-    // CBF_object cbO[5] = {CBF_object(nh, "/vrpn_client_node/obstacle/pose",obstacle_SafeDistance, obstacle_Gamma, 0),
-    //                      CBF_object(nh, "/MAV1/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 1),
-    //                      CBF_object(nh, "/MAV2/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 2),
-    //                      CBF_object(nh, "/MAV3/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 3),
-    //                      CBF_object(nh, "/MAV4/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 4)};
 
     ROS_INFO("Wait for pose and desired input init");
     while (ros::ok() && (!desired_input_init || !pose_init)) {
@@ -542,44 +357,22 @@ int main(int argc, char **argv)
             sleep(3);
             return 0;
         }
-        //ROS_INFO("setpoint: %.2f, %.2f, %.2f, %.2f", desired_pose.pose.position.x, desired_pose.pose.position.y, desired_pose.pose.position.z, desired_yaw/M_PI*180);
-        //follow desired_pose
-        // if(use_input_s == "position"){
-        //     follow(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
-        // }
-        
-        // //avoid collicsion
-        // //ROS_INFO("origin input:vx: %f vy: %f \n",desired_vel.twist.linear.x,desired_vel.twist.linear.y); 
-         
-        // //is_obstacle_exit
-		// if(cbf_mode){
-		// 	if(( ros::Time::now() - cbO[0].getPose().header.stamp)<ros::Duration(0.5)){
-		// 		if(velocity_cbf( desired_vel_raw , &desired_vel, cbO)!=0){
-		// 			desired_vel = desired_vel_raw;
-		// 		}
-		// 		//  ROS_INFO("cbf input:vx: %f vy: %f \n",desired_vel.twist.linear.x,desired_vel.twist.linear.y); 
-
-		// 	}
-		// 	else{
-		// 		desired_vel = desired_vel_raw;
-		// 	}
-		// }else{
-		// 	desired_vel = desired_vel_raw;
-		// }
-
-        // if(gs_state==1){ // takeoff 
-        //     takeoff(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
-        // }
         if(gs_state==2){ // hover 
             follow(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
         }
-        if(gs_state==3){
-
-        }
 
         follow_yaw(desired_vel, M_PI/2);
+        std::cout << "--- new ---" << std::endl;
+        std::cout << "ground station : " << gs_state << std::endl;
 
         std::cout << "---" << std::endl;
+        std::cout << "desired pose : " << std::endl;
+        std::cout << desired_pose.pose.position.x << std::endl;
+        std::cout << desired_pose.pose.position.y << std::endl;
+        std::cout << desired_pose.pose.position.z << std::endl;
+
+        std::cout << "---" << std::endl;
+        std::cout << "desired velocity : " << std::endl;
         std::cout << desired_vel.twist.linear.x << std::endl;
         std::cout << desired_vel.twist.linear.y << std::endl;
         std::cout << desired_vel.twist.linear.z << std::endl;
