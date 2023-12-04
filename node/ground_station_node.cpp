@@ -217,8 +217,8 @@ void hover(){
 	gs_msg.data = 2;
 	float hover_x = -0.25;
 	float hover_y = -0.25;
-	cmd_pos_1.pose.position.x = -0.25;
-	cmd_pos_1.pose.position.y = -0.25;
+	cmd_pos_1.pose.position.x = hover_x;
+	cmd_pos_1.pose.position.y = hover_y;
 	cmd_pos_1.pose.position.z = 0.5;
 }
 
@@ -236,6 +236,9 @@ int main(int argc, char **argv)
 	leader_mode = DISARM;
 	ros::init(argc, argv, "ground_station");
 
+    int UAV_ID;
+    ros::param::get("UAV_ID", UAV_ID);
+
 	ros::NodeHandle nh;
 	ros::Publisher uav_killer_pub = nh.advertise<std_msgs::Int32>("/uav_kill", 10);
 	ros::Publisher uav_start_pub = nh.advertise<std_msgs::Int32>("/uav_start", 10);
@@ -243,8 +246,8 @@ int main(int argc, char **argv)
 	ros::Publisher state_pub = nh.advertise<std_msgs::Int32>("/GS_state", 10);
 
     //Publisher    
-    ros::Publisher desired_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("/MAV1/desired_velocity_raw", 100);
-	ros::Publisher desired_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("/MAV1/desired_pose", 10);
+    ros::Publisher desired_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("/MAV"+std::to_string(UAV_ID)+"/desired_velocity_raw", 100);
+	ros::Publisher desired_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("/MAV"+std::to_string(UAV_ID)+"/desired_pose", 10);
 	
 	ros::Subscriber point_sub = nh.subscribe<geometry_msgs::Point>("/waypoint", 10, waypoint_cb);
 
