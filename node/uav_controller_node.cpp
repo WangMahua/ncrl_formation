@@ -443,12 +443,12 @@ int main(int argc, char **argv)
 	ros::param::get("hover_x", hover_x);
 	ros::param::get("hover_y", hover_y);
 
-    CBF_object::self_id = UAV_ID;
-    CBF_object cbO[5] = {CBF_object(nh, "/vrpn_client_node/obstacle/pose",obstacle_SafeDistance, obstacle_Gamma, 0),
-                         CBF_object(nh, "/MAV1/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 1),
-                         CBF_object(nh, "/MAV2/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 2),
-                         CBF_object(nh, "/MAV3/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 3),
-                         CBF_object(nh, "/MAV4/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 4)};
+    // CBF_object::self_id = UAV_ID;
+    // CBF_object cbO[5] = {CBF_object(nh, "/vrpn_client_node/obstacle/pose",obstacle_SafeDistance, obstacle_Gamma, 0),
+    //                      CBF_object(nh, "/MAV1/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 1),
+    //                      CBF_object(nh, "/MAV2/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 2),
+    //                      CBF_object(nh, "/MAV3/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 3),
+    //                      CBF_object(nh, "/MAV4/mavros/local_position/pose", MAV_SafeDistance, MAV_Gamma, 4)};
 
     ROS_INFO("Wait for pose and desired input init");
     while (ros::ok() && (!desired_input_init || !pose_init)) {
