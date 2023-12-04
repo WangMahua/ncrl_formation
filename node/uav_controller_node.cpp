@@ -506,7 +506,7 @@ int main(int argc, char **argv)
 
     ros::ServiceClient takeoff_cl = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/takeoff");
     mavros_msgs::CommandTOL srv_takeoff;
-    srv_takeoff.request.altitude = 1.0;
+    srv_takeoff.request.altitude = 0.7;
     if(takeoff_cl.call(srv_takeoff))
     {
         ROS_INFO("srv_takeoff send success %d", srv_takeoff.response.success);
@@ -586,9 +586,9 @@ int main(int argc, char **argv)
 		// 	desired_vel = desired_vel_raw;
 		// }
 
-        if(gs_state==1){ // takeoff 
-            takeoff(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
-        }
+        // if(gs_state==1){ // takeoff 
+        //     takeoff(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
+        // }
         if(gs_state==2){ // hover 
             follow(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
         }
