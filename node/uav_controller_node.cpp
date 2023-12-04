@@ -156,7 +156,7 @@ void follow(geometry_msgs::PoseStamped desired_pose,double desired_yaw, geometry
 
     bound_yaw( &err_yaw );
 
-    //ROS_INFO("err: %.3f,%.3f,%.3f,%.3f", err_x, err_y, err_z, err_yaw/M_PI*180);
+    ROS_INFO("err: %.3f,%.3f,%.3f,%.3f", err_x, err_y, err_z, err_yaw/M_PI*180);
 
     ux = KPx*err_x;
     uy = KPy*err_y;
@@ -373,12 +373,12 @@ int main(int argc, char **argv)
 
         std::cout << "---" << std::endl;
         std::cout << "desired velocity : " << std::endl;
-        std::cout << desired_vel.twist.linear.x << std::endl;
-        std::cout << desired_vel.twist.linear.y << std::endl;
-        std::cout << desired_vel.twist.linear.z << std::endl;
+        std::cout << desired_vel_raw.twist.linear.x << std::endl;
+        std::cout << desired_vel_raw.twist.linear.y << std::endl;
+        std::cout << desired_vel_raw.twist.linear.z << std::endl;
 
         // local_vel_pub.publish(desired_vel);
-        test_vel_pub.publish(desired_vel);
+        test_vel_pub.publish(desired_vel_raw);
         local_vel_pub.publish(desired_vel_init);
 
         ros::spinOnce();
