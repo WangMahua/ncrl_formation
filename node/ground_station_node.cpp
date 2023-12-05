@@ -25,6 +25,8 @@ geometry_msgs::TwistStamped cmd_vel_1;
 geometry_msgs::PoseStamped cmd_pos_1;
 geometry_msgs::TwistStamped cmd_vel_2;
 geometry_msgs::PoseStamped cmd_pos_2;
+geometry_msgs::TwistStamped cmd_vel_3;
+geometry_msgs::PoseStamped cmd_pos_3;
 std_msgs::Int32 gs_msg;
 
 int track_count = 0;
@@ -218,16 +220,26 @@ void takeoff(){
 
 void hover(){
 	gs_msg.data = 2;
-	float hover_x_1 = -0.25;
-	float hover_y_1 = -0.25;
-	float hover_x_2 = 0.25;
-	float hover_y_2 = 0.25;
+	float hover_x_1 = -0.70;
+	float hover_y_1 = -0.70;
+
+	float hover_x_2 = 0.70;
+	float hover_y_2 = 0.70;
+
+	float hover_x_3 = -0.70;
+	float hover_y_3 = 0.70;
+
 	cmd_pos_1.pose.position.x = hover_x_1;
 	cmd_pos_1.pose.position.y = hover_y_1;
 	cmd_pos_1.pose.position.z = 0.5;
+
 	cmd_pos_2.pose.position.x = hover_x_2;
 	cmd_pos_2.pose.position.y = hover_y_2;
 	cmd_pos_2.pose.position.z = 0.5;
+
+	cmd_pos_3.pose.position.x = hover_x_3;
+	cmd_pos_3.pose.position.y = hover_y_3;
+	cmd_pos_3.pose.position.z = 0.5;
 }
 
 void land(){
@@ -263,7 +275,7 @@ int main(int argc, char **argv)
 
 	ROS_INFO("(t):takeoff\n (l):land\n (e):start_trajectory\n (w):waypoint_mode\n (r):track_red_point\n (p):stop MAV\n (k):kill_all_drone\n (s):start_all_drone \n");
 
-	int total_uav_num = 2;
+	int total_uav_num = 3;
 
 	std::vector<ros::Publisher> desired_vel_pub_vec(total_uav_num);
 	std::vector<ros::Publisher> desired_pose_pub_vec(total_uav_num);
