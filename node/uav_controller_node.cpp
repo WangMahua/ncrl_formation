@@ -240,7 +240,6 @@ int main(int argc, char **argv)
     ros::Subscriber uav_start_sub = nh.subscribe<std_msgs::Int32>("/uav_start", 10, start_cb);
     ros::Subscriber uav_killer_sub = nh.subscribe<std_msgs::Int32>("/uav_kill", 10, kill_cb);
     ros::Subscriber uav_takeoff_sub = nh.subscribe<std_msgs::Int32>("/uav_takeoff", 10, takeoff_cb);
-
     ros::Subscriber gs_sub = nh.subscribe<std_msgs::Int32>("/GS_state", 10, gs_cb);
 
     // publisher

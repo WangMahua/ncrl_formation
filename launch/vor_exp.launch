@@ -1,7 +1,7 @@
 <launch>
     <arg name="fcu_url" default="/dev/ttyUSB0:230400"/>
     <arg name="gcs_url" default="udp://@192.168.50.81"/>
-    <arg name="SYS_ID" default="1"/>
+    <arg name="SYS_ID" default="2"/>
     <arg name="X" default="0.25"/>
 	<arg name="Y" default="0.25"/>    
 

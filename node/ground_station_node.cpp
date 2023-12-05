@@ -6,6 +6,7 @@
 #include <std_msgs/Int32.h>
 #include <tf/tf.h>
 #include <math.h>
+#include <vector>
 
 #define LEADER_INIT_X -1.0f
 #define LEADER_INIT_Y 0.0f
@@ -22,6 +23,8 @@ geometry_msgs::Point wayPoint_initial;
 
 geometry_msgs::TwistStamped cmd_vel_1;
 geometry_msgs::PoseStamped cmd_pos_1;
+geometry_msgs::TwistStamped cmd_vel_2;
+geometry_msgs::PoseStamped cmd_pos_2;
 std_msgs::Int32 gs_msg;
 
 int track_count = 0;
@@ -215,11 +218,16 @@ void takeoff(){
 
 void hover(){
 	gs_msg.data = 2;
-	float hover_x = -0.25;
-	float hover_y = -0.25;
-	cmd_pos_1.pose.position.x = hover_x;
-	cmd_pos_1.pose.position.y = hover_y;
+	float hover_x_1 = -0.25;
+	float hover_y_1 = -0.25;
+	float hover_x_2 = 0.25;
+	float hover_y_2 = 0.25;
+	cmd_pos_1.pose.position.x = hover_x_1;
+	cmd_pos_1.pose.position.y = hover_y_1;
 	cmd_pos_1.pose.position.z = 0.5;
+	cmd_pos_2.pose.position.x = hover_x_2;
+	cmd_pos_2.pose.position.y = hover_y_2;
+	cmd_pos_2.pose.position.z = 0.5;
 }
 
 void land(){
@@ -245,15 +253,35 @@ int main(int argc, char **argv)
 	ros::Publisher uav_takeoff_pub = nh.advertise<std_msgs::Int32>("/uav_takeoff", 10);
 	ros::Publisher state_pub = nh.advertise<std_msgs::Int32>("/GS_state", 10);
 
-    //Publisher    
-    ros::Publisher desired_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("/MAV"+std::to_string(UAV_ID)+"/desired_velocity_raw", 100);
-	ros::Publisher desired_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("/MAV"+std::to_string(UAV_ID)+"/desired_pose", 10);
-	
+    // //Publisher    
+    // ros::Publisher desired_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("/MAV2/desired_velocity_raw", 100);
+	// ros::Publisher desired_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("/MAV2/desired_pose", 10);
+
 	ros::Subscriber point_sub = nh.subscribe<geometry_msgs::Point>("/waypoint", 10, waypoint_cb);
 
 	ros::Rate loop_rate(100);
 
 	ROS_INFO("(t):takeoff\n (l):land\n (e):start_trajectory\n (w):waypoint_mode\n (r):track_red_point\n (p):stop MAV\n (k):kill_all_drone\n (s):start_all_drone \n");
+
+	int total_uav_num = 2;
+
+	std::vector<ros::Publisher> desired_vel_pub_vec(total_uav_num);
+	std::vector<ros::Publisher> desired_pose_pub_vec(total_uav_num);
+
+	for(int i=0;i<total_uav_num;i++){
+		
+		ros::Publisher desired_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("/MAV"+std::to_string(i+1)+"/desired_velocity_raw", 100);
+		ros::Publisher desired_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("/MAV"+std::to_string(i+1)+"/desired_pose", 100);
+
+		desired_vel_pub_vec[i] = desired_vel_pub;
+		desired_pose_pub_vec[i] = desired_pos_pub;
+	}
+
+	
+
+
+
+	
 	while (ros::ok())
 	{
         //keyboard control
@@ -301,6 +329,7 @@ int main(int argc, char **argv)
 					hover();
 					ROS_INFO("start all drone");
                     break;
+			
 			}
         }
 		/**
@@ -317,10 +346,13 @@ int main(int argc, char **argv)
 		takeoff_msg.data = takeoff_all_drone;
 		uav_start_pub.publish(start_msg);
 		uav_takeoff_pub.publish(takeoff_msg);
-		desired_pos_pub.publish(cmd_pos_1);
-		state_pub.publish(gs_msg);
-		ros::spinOnce();
 
+		state_pub.publish(gs_msg);
+
+		desired_pose_pub_vec[0].publish(cmd_pos_1);
+		desired_pose_pub_vec[1].publish(cmd_pos_2);
+
+		ros::spinOnce();
 		loop_rate.sleep();
   }
 

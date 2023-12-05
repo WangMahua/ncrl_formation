@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
+  message_generation
 )
 find_package(PythonLibs)
 find_package(OsqpEigen REQUIRED)
@@ -51,11 +52,11 @@ find_package(OsqpEigen REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  VelCmds.msg
+  PoseCmds.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -72,10 +73,11 @@ find_package(OsqpEigen REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -109,7 +111,7 @@ find_package(OsqpEigen REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES flight_control
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+ CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -239,13 +241,15 @@ target_include_directories(uav_controller PRIVATE
 #		ground station 
 add_executable(ground_station 
 	node/ground_station_node.cpp 
-	src/getch.cpp )
+	src/getch.cpp 
+)
 target_link_libraries(ground_station 
 	${catkin_LIBRARIES} 
 	OsqpEigen::OsqpEigen 
-  )
+)
 target_include_directories(ground_station PRIVATE
 	include/${PROJECT_NAME}/ )
+
 
 #############
 ## Install ##
