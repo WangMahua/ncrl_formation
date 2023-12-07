@@ -240,6 +240,7 @@ int main(int argc, char **argv)
     ros::Subscriber uav_start_sub = nh.subscribe<std_msgs::Int32>("/uav_start", 10, start_cb);
     ros::Subscriber uav_killer_sub = nh.subscribe<std_msgs::Int32>("/uav_kill", 10, kill_cb);
     ros::Subscriber uav_takeoff_sub = nh.subscribe<std_msgs::Int32>("/uav_takeoff", 10, takeoff_cb);
+
     ros::Subscriber gs_sub = nh.subscribe<std_msgs::Int32>("/GS_state", 10, gs_cb);
 
     // publisher
@@ -265,10 +266,10 @@ int main(int argc, char **argv)
 	ros::param::get("hover_y", hover_y);
 
     ROS_INFO("Wait for pose and desired input init");
-    while (ros::ok() && (!desired_input_init || !pose_init)) {
+    while (ros::ok() && (!pose_init)) {
         ros::spinOnce();
         rate.sleep();
-        ROS_INFO("Wait for pose and desired input init %d,%d",desired_input_init,pose_init);
+        ROS_INFO("Wait for pose and desired input init, %d",pose_init);
     }
     ROS_INFO("pose initialized");
     

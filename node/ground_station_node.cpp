@@ -363,6 +363,7 @@ int main(int argc, char **argv)
 
 		desired_pose_pub_vec[0].publish(cmd_pos_1);
 		desired_pose_pub_vec[1].publish(cmd_pos_2);
+		desired_pose_pub_vec[2].publish(cmd_pos_3);
 
 		ros::spinOnce();
 		loop_rate.sleep();
