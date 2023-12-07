@@ -30,7 +30,7 @@ double roll = 0, pitch = 0, yaw = 0;
 
 // var for desired_pose
 geometry_msgs::PoseStamped desired_pose;
-double desired_yaw = 0;
+double desired_yaw = 0.0;
 int kill_all_drone = 0;
 int start_all_drone = 0;
 int takeoff_all_drone = 0;
@@ -86,6 +86,7 @@ void desired_pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
     msg->pose.orientation.z,
     msg->pose.orientation.w);
     desired_yaw = tf::getYaw(Q);
+    desired_yaw = 90/180*M_PI;
     bound_yaw(&desired_yaw);
 }
 
