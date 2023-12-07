@@ -86,7 +86,7 @@ void desired_pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
     msg->pose.orientation.z,
     msg->pose.orientation.w);
     desired_yaw = tf::getYaw(Q);
-    desired_yaw = 90/180*M_PI;
+    // desired_yaw = 0/180*M_PI;
     bound_yaw(&desired_yaw);
 }
 
@@ -373,10 +373,16 @@ int main(int argc, char **argv)
         std::cout << desired_pose.pose.position.z << std::endl;
 
         std::cout << "---" << std::endl;
-        std::cout << "desired velocity : " << std::endl;
-        std::cout << desired_vel_raw.twist.linear.x << std::endl;
-        std::cout << desired_vel_raw.twist.linear.y << std::endl;
-        std::cout << desired_vel_raw.twist.linear.z << std::endl;
+        std::cout << "now pose : " << std::endl;
+        std::cout << host_mocap.pose.position.x << std::endl;
+        std::cout << host_mocap.pose.position.y << std::endl;
+        std::cout << host_mocap.pose.position.z << std::endl;
+
+        // std::cout << "---" << std::endl;
+        // std::cout << "desired velocity : " << std::endl;
+        // std::cout << desired_vel_raw.twist.linear.x << std::endl;
+        // std::cout << desired_vel_raw.twist.linear.y << std::endl;
+        // std::cout << desired_vel_raw.twist.linear.z << std::endl;
 
         // local_vel_pub.publish(desired_vel);
         test_vel_pub.publish(desired_vel_raw);
