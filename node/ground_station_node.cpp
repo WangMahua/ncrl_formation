@@ -242,8 +242,12 @@ void hover(){
 	cmd_pos_3.pose.position.z = 0.5;
 }
 
-void land(){
+void vor(){
 	gs_msg.data = 3;
+}
+
+void land(){
+	gs_msg.data = 4;
 	cmd_pos_1.pose.position.x = -0.25;
 	cmd_pos_1.pose.position.y = -0.25;
 	cmd_pos_1.pose.position.z = 0.0;
@@ -263,6 +267,9 @@ int main(int argc, char **argv)
 	ros::Publisher uav_killer_pub = nh.advertise<std_msgs::Int32>("/uav_kill", 10);
 	ros::Publisher uav_start_pub = nh.advertise<std_msgs::Int32>("/uav_start", 10);
 	ros::Publisher uav_takeoff_pub = nh.advertise<std_msgs::Int32>("/uav_takeoff", 10);
+	ros::Publisher uav_vor_pub = nh.advertise<std_msgs::Int32>("/uav_vor", 10);
+	
+	
 	ros::Publisher state_pub = nh.advertise<std_msgs::Int32>("/GS_state", 10);
 
     // //Publisher    
@@ -341,7 +348,9 @@ int main(int argc, char **argv)
 					hover();
 					ROS_INFO("start all drone");
                     break;
-			
+				case 117:
+					vor();
+					ROS_INFO("start voronoi");
 			}
         }
 		/**

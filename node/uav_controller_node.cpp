@@ -37,6 +37,7 @@ int takeoff_all_drone = 0;
 int gs_state = 0;
 // var for desired_velocity
 geometry_msgs::TwistStamped desired_vel_raw;
+geometry_msgs::TwistStamped desired_vel_vor;
 geometry_msgs::TwistStamped desired_vel;        //output
 geometry_msgs::TwistStamped desired_vel_init;        //output
 
@@ -93,11 +94,15 @@ void desired_pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
 void desired_vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg){
     //store odometry into global variable
     desired_vel_raw = *msg;
-    
-    if(desired_input_init == false){
-        desired_input_init = true;
-    }
+
 }
+
+void desired_vor_vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg){
+    //store odometry into global variable
+    desired_vel_vor = *msg;
+
+}
+
 
 void land(geometry_msgs::PoseStamped desired_pose,double desired_yaw, geometry_msgs::TwistStamped *desired_vel, geometry_msgs::PoseStamped uav_pose)
 {
@@ -186,6 +191,15 @@ void follow(geometry_msgs::PoseStamped desired_pose,double desired_yaw, geometry
     desired_vel->twist.angular.z = uyaw;
 }
 
+void get_vor_vel(geometry_msgs::TwistStamped *desired_vel)
+{
+    //output control input
+    desired_vel->twist.linear.x = desired_vel_vor.twist.linear.x ;
+    desired_vel->twist.linear.y = desired_vel_vor.twist.linear.y ;
+    desired_vel->twist.linear.z = desired_vel_vor.twist.linear.z ;
+    desired_vel->twist.angular.z = desired_vel_vor.twist.angular.z ;
+}
+
 void follow_yaw(geometry_msgs::TwistStamped& desired_vel, double desired_yaw)
 {
 	double err_yaw, u_yaw;
@@ -234,13 +248,16 @@ int main(int argc, char **argv)
     //    subscriber    //
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 100, state_cb);
     ros::Subscriber host_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, host_pose_cb);
-    
+
+    ros::Subscriber desired_vor_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>("cmd_vel_from_vor", 10, desired_vor_vel_cb);
     ros::Subscriber desired_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("desired_pose", 10, desired_pose_cb);
     ros::Subscriber desired_velocity_sub = nh.subscribe<geometry_msgs::TwistStamped>("desired_velocity_raw", 10, desired_vel_cb);
     
     ros::Subscriber uav_start_sub = nh.subscribe<std_msgs::Int32>("/uav_start", 10, start_cb);
     ros::Subscriber uav_killer_sub = nh.subscribe<std_msgs::Int32>("/uav_kill", 10, kill_cb);
     ros::Subscriber uav_takeoff_sub = nh.subscribe<std_msgs::Int32>("/uav_takeoff", 10, takeoff_cb);
+
+
 
     ros::Subscriber gs_sub = nh.subscribe<std_msgs::Int32>("/GS_state", 10, gs_cb);
 
@@ -348,6 +365,12 @@ int main(int argc, char **argv)
 
 
     while (ros::ok()) {
+
+        // make sure velocity has been published 
+        desired_vel_raw = desired_vel_init;
+
+
+
         //keyboard control
         if(kill_all_drone == 1){
             ROS_WARN("velocity_cbf_kill!");
@@ -358,19 +381,25 @@ int main(int argc, char **argv)
             sleep(3);
             return 0;
         }
+
         if(gs_state==2){ // hover 
             follow(desired_pose,desired_yaw, &desired_vel_raw, host_mocap);
+            std::cout << "---" << std::endl;
+            std::cout << "desired pose : " << std::endl;
+            std::cout << desired_pose.pose.position.x << std::endl;
+            std::cout << desired_pose.pose.position.y << std::endl;
+            std::cout << desired_pose.pose.position.z << std::endl;
+            follow_yaw(desired_vel, M_PI/2);
         }
 
-        follow_yaw(desired_vel, M_PI/2);
+        if(gs_state==3){ // vor
+            get_vor_vel(&desired_vel_raw);
+        }
+
+
         std::cout << "--- new ---" << std::endl;
         std::cout << "ground station : " << gs_state << std::endl;
 
-        std::cout << "---" << std::endl;
-        std::cout << "desired pose : " << std::endl;
-        std::cout << desired_pose.pose.position.x << std::endl;
-        std::cout << desired_pose.pose.position.y << std::endl;
-        std::cout << desired_pose.pose.position.z << std::endl;
 
         std::cout << "---" << std::endl;
         std::cout << "now pose : " << std::endl;
