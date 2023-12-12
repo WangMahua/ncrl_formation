@@ -2,5 +2,7 @@
     <arg name="SYS_ID" default="1"/>
     <group ns="MAV$(arg SYS_ID)">
         <node name="transmit_test_node" pkg="flight_control" type="transmit_test_node" output="screen">
+        </node>
     </group>
+
 </launch>
