@@ -260,6 +260,15 @@ target_link_libraries(transmit_test_node
 target_include_directories(transmit_test_node PRIVATE
 	include/${PROJECT_NAME}/ )
 
+#		test transmittion 
+add_executable(send_timestamp 
+node/send_timestamp.cpp )
+
+target_link_libraries(send_timestamp 
+${catkin_LIBRARIES} 
+)
+target_include_directories(send_timestamp PRIVATE
+include/${PROJECT_NAME}/ )
 
 #############
 ## Install ##
