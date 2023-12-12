@@ -270,7 +270,9 @@ int main(int argc, char **argv)
     // service
     ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
-    ros::Rate rate(100);
+    // ros::Rate rate(100);
+    ros::Rate rate(200);
+
 
     float obstacle_Gamma, obstacle_SafeDistance, MAV_Gamma, MAV_SafeDistance;
 	bool cbf_mode;
@@ -368,8 +370,6 @@ int main(int argc, char **argv)
 
         // make sure velocity has been published 
         desired_vel_raw = desired_vel_init;
-
-
 
         //keyboard control
         if(kill_all_drone == 1){

@@ -250,6 +250,16 @@ target_link_libraries(ground_station
 target_include_directories(ground_station PRIVATE
 	include/${PROJECT_NAME}/ )
 
+#		test transmittion 
+add_executable(transmit_test_node 
+	node/transmit_test_node.cpp )
+
+target_link_libraries(transmit_test_node 
+	${catkin_LIBRARIES} 
+  )
+target_include_directories(transmit_test_node PRIVATE
+	include/${PROJECT_NAME}/ )
+
 
 #############
 ## Install ##
